@@ -1,0 +1,22 @@
+{
+  "name": "imageresizer",
+  "productName": "ImageResizer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "trace": "electron --trace-warnings .",
+    "watch": "nodemon --watch src/main --exec \"electron .\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^27.0.2",
+    "nodemon": "^3.0.1"
+  },
+  "dependencies": {
+    "toastify-js": "^1.12.0"
+  }
+}

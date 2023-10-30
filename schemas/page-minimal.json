@@ -1,0 +1,32 @@
+{
+  "label": "",
+  "type": "object",
+  "values": [
+    {
+      "label": "layout",
+      "type": "variable",
+      "widget": "select",
+      "value": ["default", "sections", "blocks"]
+    },
+    {
+      "label": "draft",
+      "type": "variable",
+      "widget": "checkbox",
+      "value": false
+    },
+    {
+      "label": "bodyClasses",
+      "type": "variable",
+      "widget": "text",
+      "value": "",
+      "placeholder": "Add classes separated by a space"
+    },
+    {
+      "label": "navLabel",
+      "type": "variable",
+      "widget": "text",
+      "value": "",
+      "placeholder": "Add a Label for the navigation"
+    }
+  ]
+}
