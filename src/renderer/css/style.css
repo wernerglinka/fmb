@@ -2,9 +2,11 @@
   --font-color: #fff;
   --border-color: #bbb;
   --element-padding: 5px;
+  --body-padding: 2rem;
   --submit-button-color:
   --submit-button-padding: 0.75rem;
   --elements-radius: 0.5rem;
+  --titlebar-height: 2rem;
 }
 
 *:focus {
@@ -12,8 +14,9 @@
 }
 
 body {
+  margin: 0;
   min-height: 100vh;
-  padding: 2rem;
+  padding: var(--body-padding);
   background-image: linear-gradient(to bottom, #5397be, #3a4076);
   background-repeat: no-repeat;
   background-size: cover;
@@ -22,13 +25,14 @@ body {
 }
 
 .titlebar {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  height: 2rem;
+  height: var(--titlebar-height);
+  width: 100%;
   -webkit-user-select: none;
   -webkit-app-region: drag;
+  cursor: pointer;
 }
 
 .titlebar-button {
@@ -36,6 +40,7 @@ body {
 }
 
 #frontmatter-container {
+  position: relative;
   background-image: linear-gradient(to bottom, #3a4076, #5397be);
   background-repeat: no-repeat;
   background-size: cover;
@@ -44,14 +49,32 @@ body {
   justify-content: center;
   align-items: flex-start;
   border-radius: 1rem;
-  padding: 2rem 1rem;
+  padding: 5rem 1rem 2rem;
 }
 
 /** 
  * form styles 
  */
+.frontmatter-select {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  width: 10rem;
+  font-family: 'Open Sans', sans-serif;
 
-form {
+  &:after {
+    position: absolute;
+    top: var(--element-padding);
+    right: var(--element-padding);
+    content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="m20 9l-8 8l-8-8l1.414-1.414L12 14.172l6.586-6.586z"/></svg> ');
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+
+#main-form {
   width: 100%;
   max-width: 30rem;
 }

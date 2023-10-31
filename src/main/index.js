@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
-const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
+const yaml = require('js-yaml');
 
 const isDev = process.env.NODE_ENV !== 'production';
 const isMac = process.platform === 'darwin';
@@ -8,22 +9,14 @@ const isMac = process.platform === 'darwin';
 let mainWindow;
 let aboutWindow;
 
-function getSchema(e, schema) {
-  // construct the path to the schema file
-  let schemaPath = path.join(__dirname, '../../schemas/', schema);
-  // return the schema file
-  return fs.readFileSync(schemaPath , 'utf8'); 
-}
+async function getSchemas(schemasPath) {
+  // get schema file list for .json files only. Keep hidden system files out!
+  const schemaList = fs.readdirSync(schemasPath).filter(file => path.extname(file) === '.json');
 
-function getSchemas() {
-  // construct the path to the schema directory
-  const schemasPath = path.join(__dirname, '../../schemas/');
-  // get schema file list
-  const schemaList = fs.readdirSync(schemasPath); 
   const allSchemas = [];
   // get all available schemas
   schemaList.forEach((schema) => {
-    const thisSchemaPath = path.join(__dirname, '../../schemas/', schema);
+    const thisSchemaPath = path.join(schemasPath, schema);
     const thisSchema = fs.readFileSync(thisSchemaPath , 'utf8');
     allSchemas.push(thisSchema);
   });
@@ -36,7 +29,6 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: isDev ? 1000 : 500,
     height: 600,
-    icon: `${__dirname}/assets/icons/Icon_256x256.png`,
     resizable: isDev,
     titleBarStyle: 'hidden', 
     webPreferences: {
@@ -54,16 +46,6 @@ function createMainWindow() {
 
   // load the main window
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
-
-  // Paint the main window when it is ready
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-
-    //get all schemas
-    const schemas = getSchemas();
-    // send the schemas to the renderer
-    mainWindow.webContents.send('schemas', schemas);
-  });
 }
 
 // About Window
@@ -82,18 +64,11 @@ function createAboutWindow() {
 function refreshMainWindow() {
   mainWindow.reload();
 
-  console.log("should reload...");
-
   // Paint the main window when it is ready
   mainWindow.webContents.once('did-finish-load', (e) => {
     mainWindow.show();
-
-    //get all schemas
-    const schemas = getSchemas();
-    // send the schemas to the renderer
-    mainWindow.webContents.send('schemas', schemas);
   });
-}
+};
 
 
 //On app ready, create the window
@@ -104,8 +79,39 @@ app.whenReady().then(() => {
   const mainMenu = Menu.buildFromTemplate(menu);
   Menu.setApplicationMenu(mainMenu);
 
+  // Paint the main window when it is ready
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
+
   // Remove window from memory when closed
   mainWindow.on('closed', () => (mainWindow = null));
+
+
+  // handle dialog requests from the renderer process
+  ipcMain.handle('dialog', (e, method, params) => {
+    return dialog[method](mainWindow, params)});
+
+  // handle schema requests from the renderer process
+  ipcMain.handle('getSchemas', async (e, path) => {
+    const schemas = await getSchemas(path);
+    return schemas;
+  });
+
+  // get the page object from the renderer process
+  ipcMain.handle('writeObjectToFile', (e, pageObject) => {
+    //convert the page object to frontmatter yaml
+    const yamlString = `--- \n${yaml.dump(pageObject)}\n---`;
+    // write the YAML to a file
+    // first open a dialog to select a directory
+    dialog.showOpenDialog({ properties: ['openDirectory'] })
+      .then(result => {
+        const dir = result.filePaths[0];
+        // write the YAML to a file
+        const targetFile = path.join(dir, 'testfile.md');
+        fs.writeFileSync(targetFile, yamlString);
+    });
+  });
 });
 
 // Menu template

@@ -25,6 +25,10 @@ contextBridge.exposeInMainWorld('Toastify', {
   toast: (options) => Toastify(options).showToast(),
 });
 
+
 contextBridge.exposeInMainWorld('electronAPI', {
-  schemas: (callback) => ipcRenderer.on('schemas', callback)
+  writeObjectToFile: (obj) => ipcRenderer.invoke('writeObjectToFile', obj), // use to get the page object from the renderer process to the main process
+  openDialog: (method, config) => ipcRenderer.invoke('dialog', method, config), // use to open a dialog from the renderer process to the main process
+  getSchemas: (path) => ipcRenderer.invoke('getSchemas', path),
 })
+
