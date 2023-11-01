@@ -8,6 +8,7 @@ const isMac = process.platform === 'darwin';
 
 let mainWindow;
 let aboutWindow;
+let componentsWindow;
 
 async function getSchemas(schemasPath) {
   // get schema file list for .json files only. Keep hidden system files out!
@@ -29,7 +30,7 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: isDev ? 1000 : 500,
     height: 600,
-    resizable: isDev,
+    resizable: true,
     titleBarStyle: 'hidden', 
     webPreferences: {
       nodeIntegration: true,
@@ -51,15 +52,40 @@ function createMainWindow() {
 // About Window
 function createAboutWindow() {
   aboutWindow = new BrowserWindow({
-    width: 300,
-    height: 300,
-    title: 'About Electron',
-    icon: `${__dirname}/assets/icons/Icon_256x256.png`,
+    width: 500,
+    height: 340,
+    titleBarStyle: 'hidden', 
+    title: 'About FMB',
+    icon: `${__dirname}/assets/icons/blocks.png`,
   });
 
   // load the about window
   aboutWindow.loadFile(path.join(__dirname, '../renderer/about.html'));
 }
+
+// Add components to the main menu
+function createComponentWindow() {
+  componentsWindow = new BrowserWindow({
+    width: isDev ? 1000 : 500,
+    height: 600,
+    resizable: true,
+    titleBarStyle: 'hidden', 
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+    },
+    show: false,
+  });
+
+  componentsWindow.loadFile(path.join(__dirname, '../renderer/addComponents.html'));
+
+  // Don't destroy, keep the components window hidden until needed
+  componentsWindow.on('close', e => {
+    e.preventDefault();
+    componentsWindow.hide();
+  });
+};
 
 function refreshMainWindow() {
   mainWindow.reload();
@@ -70,12 +96,18 @@ function refreshMainWindow() {
   });
 };
 
+function showComponentsWindow(componentType) {
+  componentsWindow.webContents.send('componentType', componentType);
+  componentsWindow.show();
+}
 
 //On app ready, create the window
 app.whenReady().then(() => {
 
+  // create the main window
   createMainWindow();
 
+  // Build the menu from the template
   const mainMenu = Menu.buildFromTemplate(menu);
   Menu.setApplicationMenu(mainMenu);
 
@@ -84,8 +116,26 @@ app.whenReady().then(() => {
     mainWindow.show();
   });
 
-  // Remove window from memory when closed
-  mainWindow.on('closed', () => (mainWindow = null));
+  // create the components window
+  createComponentWindow();
+
+  // Quit app when main window is closed
+  mainWindow.on('close', e => {
+    e.preventDefault()
+    dialog.showMessageBox({
+      type: 'info',
+      buttons: ['Ok', 'Exit'],
+      cancelId: 1,
+      defaultId: 0,
+      title: 'Warning',
+      detail: 'Have you saved all your work?'
+    }).then(({ response, checkboxChecked }) => {
+      if (response) {
+        mainWindow.destroy()
+        app.quit()
+      }
+    })
+  });
 
 
   // handle dialog requests from the renderer process
@@ -135,14 +185,28 @@ const menu = [
             {
               label: 'Quit',
               click: () => app.quit(),
-              accelerator: 'CmdOrCtrl+W',
+              accelerator: 'CmdOrCtrl+Q',
             }
           ],
         },
       ]
     : []),
   {
-    role: 'fileMenu',
+    label: 'File',
+    submenu: [
+      {
+        label: 'New Page', 
+      },
+      {
+        label: 'Open Page',
+      },
+      { type: 'separator' },
+      {
+        label: 'Close Window',
+        click: () => app.quit(),
+        accelerator: 'CmdOrCtrl+Q',
+      }
+    ],
   },
   ...(!isMac
     ? [
@@ -170,6 +234,27 @@ const menu = [
         },
       ]
     : []),
+  {
+    label: 'Add Components',
+    submenu: [
+      {
+        label: 'Text',
+        click: () => showComponentsWindow('text'),
+      },
+      {
+        label: 'Text Area',
+        click: () => showComponentsWindow('textarea'),
+      },
+      {
+        label: 'Object',
+        click: () => showComponentsWindow('object'),
+      },
+      {
+        label: 'Array',
+        click: () => showComponentsWindow('array'),
+      },
+    ],
+  }
 ];
 
 

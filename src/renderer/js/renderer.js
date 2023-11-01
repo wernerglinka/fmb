@@ -1,12 +1,47 @@
 // renderer.js is of type module, so we can use "await" in it.
   
 /**
- * @function createFormElement
+ * @function renderSchema
+ * @param {object} schema
+ * @returns void
+ */
+function renderSchema(schema, form) {
+  if (schema.label) {
+    // create a fieldset for its values
+    const fieldset = document.createElement('fieldset');
+    // create a legend for the fieldset
+    const legend = document.createElement('legend');
+    legend.innerHTML = schema.label;
+    fieldset.appendChild(legend);
+    
+    // create a form element for each value in the fieldset
+    schema.values.forEach(value => {
+      const formElement = createFormElementFromSchema(value, schema.label);
+      // add the form element to the fieldset
+      fieldset.appendChild(formElement);
+    });
+
+    // add the fieldset to the form
+    form.appendChild(fieldset);
+
+  } else {
+    // create a 'stand-alone' form element for each value in the schema
+    schema.values.forEach(value => {
+      const formElement = createFormElementFromSchema(value, "");
+      // add the form element to the form
+      form.appendChild(formElement);
+    });
+  }
+};
+
+
+/**
+ * @function createFormElementFromSchema
  * @param {object} value 
  * @param {string} parent 
  * @returns a form element
  */
-function createFormElement(value, parent) {
+function createFormElementFromSchema(value, parent) {
   // create a div to hold the form element
   const div = document.createElement('div');
   div.classList.add('form-element');
@@ -83,38 +118,49 @@ function createFormElement(value, parent) {
   return div;
 }
 
+const widgetSelections = [ 
+  "text", 
+  "textarea", 
+  "object", 
+  "array"
+]
 
 /**
- * @function buildMainForm
+ * @function renderFrontmatterSelectForm
+ * @description This function will render a select widget for the frontmatter
+ * @returns the frontmatter select form
  */
-function buildMainForm(schemas) {
+function renderFrontmatterSelectWidget() {
+  const widget = `
+    <button id="select-component" class="form-button">Select a component</button>
+    <ul class="select-component-menu">
+    ${widgetSelections.map(option => `<li>${option}</li>`).join('')}
+    </ul>
+    `
+  const widgetWrapper = document.createElement('div');
+  widgetWrapper.classList.add('frontmatter-select');
+  widgetWrapper.innerHTML = widget;
+
+  return widgetWrapper;
+}
+
+/**
+ * @function renderMainForm
+ * @param {array} schemas - an array of schemas
+ * @param {string} formId - the id of the form
+ * @description This function will build the main form and renders it to the DOM
+ * @returns void
+ */
+function renderMainForm(schemas, formId) {
   const frontmatterContainer = document.getElementById('frontmatter-container');
 
-
-  // Render an add frontmatter select form
-  const frontmatterSelectForm = document.createElement('form');
-  frontmatterSelectForm.setAttribute('id', 'frontmatter-select-form');
-  // Create the select element options
-  const values = ["select frontmatter", "text", "textarea", "object", "array"];
-  
-  // create the input
-  const input = document.createElement('select');
-  input.innerHTML = values.map(option => `<option value="${option}">${option}</option>`).join('');
-  
-  // create wrapper for select
-  const selectWrapper = document.createElement('div');
-  selectWrapper.classList.add('frontmatter-select');
-  selectWrapper.appendChild(input);
-
-  // add the form element to the form
-  frontmatterSelectForm.appendChild(selectWrapper);
-  frontmatterContainer.appendChild(frontmatterSelectForm);
-
-  
+  // add a widget for the frontmatter selection
+  const frontmatterSelectWidget = renderFrontmatterSelectWidget();
+  frontmatterContainer.appendChild(frontmatterSelectWidget);
 
   // create a form
   const form = document.createElement('form');
-  form.setAttribute('id', 'main-form');
+  form.setAttribute('id', formId);
 
   // check if there are any schemas and render them first
   // used for page specific frontmatter components
@@ -124,37 +170,15 @@ function buildMainForm(schemas) {
 
     // loop over the schemas and create a form element for each
     availableSchemas.forEach(schema => {
-      if (schema.label) {
-        // create a fieldset for the schema
-        const fieldset = document.createElement('fieldset');
-        // create a legend for the fieldset
-        const legend = document.createElement('legend');
-        legend.innerHTML = schema.label;
-        fieldset.appendChild(legend);
-        // create a form element for each value in the schema
-        schema.values.forEach(value => {
-          const formElement = createFormElement(value, schema.label);
-          // add the form element to the fieldset
-          fieldset.appendChild(formElement);
-        });
-        // add the fieldset to the form
-        form.appendChild(fieldset);
-
-      } else {
-        // create a form element for each value in the schema
-        schema.values.forEach(value => {
-          const formElement = createFormElement(value, "");
-          // add the form element to the form
-          form.appendChild(formElement);
-        });
-      }
+      renderSchema(schema, form);
     });
   }
 
   // add submit button
   const submit = document.createElement('button');
   submit.setAttribute('type', 'submit');
-  submit.classList.add("submit-primary");
+  submit.id = 'submit-primary';
+  submit.classList.add('form-button');
   submit.innerHTML = 'Submit';
   form.appendChild(submit);
 
@@ -169,7 +193,7 @@ function buildMainForm(schemas) {
    * It will loop through the flatValues and create all properties of an object
    * @returns {object}
    */
-const convertFormdataToObject = function(flatValues) {
+function convertFormdataToObject(flatValues) {
   const pageObject = {};
 
   for (let key in flatValues) {
@@ -205,29 +229,12 @@ const convertFormdataToObject = function(flatValues) {
   return pageObject;
 }
 
-// get the project schemas directory from the user
-const dialogConfig = {
-  message: 'Select the Schemas Directory',
-  buttonLabel: 'Select',
-  properties: ['openDirectory']
-};
-const schemasDirectory = await electronAPI.openDialog('showOpenDialog', dialogConfig);
-
-// get the schemas from the directory
-let schemas = [];
-if(schemasDirectory.filePaths[0] !== undefined) {
-  schemas = await electronAPI.getSchemas(schemasDirectory.filePaths[0]);
-}
-
-// Build the form from the schemas
-buildMainForm(schemas);
-
-// Listen for form submittion
-const mainForm = document.getElementById('main-form');
-
-mainForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-
+/**
+ * @function writeObjectToFile
+ * @description This function will get the form data, convert it to an object and write it to a file
+ * @returns void
+ */
+function writeObjectToFile() {
   // Get all form data manually since the form data object will not include
   // any unchecked checkboxes. If we use formData and then check for checkboxes, we will 
   // loose the order of object properties
@@ -244,7 +251,44 @@ mainForm.addEventListener('submit', (e) => {
   const pageObject = convertFormdataToObject(formDataObj);
 
   // send the page object to the main process
-  electronAPI.writeObjectToFile(pageObject);
+  window.electronAPI.writeObjectToFile(pageObject);
+};
+
+// get the project schemas directory from the main process
+const dialogConfig = {
+  message: 'Select the Schemas Directory',
+  buttonLabel: 'Select',
+  properties: ['openDirectory']
+};
+const schemasDirectory = await window.electronAPI.openDialog('showOpenDialog', dialogConfig);
+
+// get the schemas in the directory from the main process
+let schemas = [];
+if(schemasDirectory.filePaths[0] !== undefined) {
+  schemas = await window.electronAPI.getSchemas(schemasDirectory.filePaths[0]);
+}
+
+// Build the form from the schemas
+const formId = 'main-form';
+renderMainForm(schemas, formId);
+
+// Listen for form submittion
+const mainForm = document.getElementById(formId);
+mainForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  // get form data, convert to object and write to file
+  writeObjectToFile();
+});
+
+// Listen for frontmatter component selection
+const frontmatterSelectMenu = document.querySelector('.select-component-menu');
+frontmatterSelectMenu.addEventListener('click', (e) => {
+  const selectedComponent = e.target.innerHTML;
+
+
+
+  console.log(selectedComponent);
 });
 
 
