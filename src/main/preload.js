@@ -5,6 +5,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeObjectToFile: (obj) => ipcRenderer.invoke('writeObjectToFile', obj), // use to get the page object from the renderer process to the main process
   openDialog: (method, config) => ipcRenderer.invoke('dialog', method, config), // use to open a dialog from the renderer process to the main process
   getSchemas: (path) => ipcRenderer.invoke('getSchemas', path),
-  receiveComponentType: (callback) => ipcRenderer.on('componentType', callback)
+  receiveComponentType: (callback) => ipcRenderer.on('componentType', callback),
+  sendToOtherRenderer: (targetIdentifier, objectToSend) => ipcRenderer.send('send-to-other-renderer', { targetIdentifier, objectToSend }),
+  receiveFromOtherRenderer: (callback) => ipcRenderer.on('receive-from-other-renderer', callback)
+
+
 })
 

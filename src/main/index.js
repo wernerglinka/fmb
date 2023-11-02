@@ -6,6 +6,9 @@ const yaml = require('js-yaml');
 const isDev = process.env.NODE_ENV !== 'production';
 const isMac = process.platform === 'darwin';
 
+// Define a window map to store window identifiers
+const windows = new Map();
+
 let mainWindow;
 let aboutWindow;
 let componentsWindow;
@@ -25,6 +28,11 @@ async function getSchemas(schemasPath) {
   return allSchemas;
 }
 
+function setWindowIdentifier(win, identifier) {
+  win.identifier = identifier;
+  windows.set(identifier, win);
+}
+
 // Main Window
 function createMainWindow() {
   mainWindow = new BrowserWindow({
@@ -39,6 +47,9 @@ function createMainWindow() {
     },
     show: false,
   });
+
+  // set the window identifier, to be used for communication between renderer processes
+  setWindowIdentifier(mainWindow, 'mainWindow');
 
   // Show devtools automatically if in development
   if (isDev) {
@@ -77,6 +88,9 @@ function createComponentWindow() {
     },
     show: false,
   });
+
+  // set the window identifier, to be used for communication between renderer processes
+  setWindowIdentifier(componentsWindow, 'componentsWindow');
 
   componentsWindow.loadFile(path.join(__dirname, '../renderer/addComponents.html'));
 
@@ -147,6 +161,15 @@ app.whenReady().then(() => {
     const schemas = await getSchemas(path);
     return schemas;
   });
+
+  // handle communication between two renderer processes
+  ipcMain.on('send-to-other-renderer', (event, { targetIdentifier, objectToSend }) => {
+    // Forward the object to the targeted renderer process
+    const targetWindow = windows.get(targetIdentifier);
+    if (targetWindow) {
+      targetWindow.webContents.send('receive-from-other-renderer', objectToSend);
+    }
+});
 
   // get the page object from the renderer process
   ipcMain.handle('writeObjectToFile', (e, pageObject) => {

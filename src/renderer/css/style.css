@@ -1,6 +1,7 @@
 :root {
   --font-color: #fff;
   --border-color: #bbb;
+  --error-color: red;
   --element-padding: 5px;
   --body-padding: 2rem;
   --submit-button-color:
@@ -97,6 +98,15 @@ h3 {
   &:hover {
     background-color: rgba(255, 255, 255, 0.2);
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &:hover {
+      background-color: inherit;
+    }
+  }
 }
 
 /** 
@@ -178,6 +188,7 @@ fieldset {
     }
 
     & div {
+      position: relative;
       flex: 1 1 auto;
       display: flex;
       justify-content: flex-start;
@@ -185,6 +196,15 @@ fieldset {
 
       & *:not([type="checkbox"][role="switch"]) {
         width: 100%;
+      }
+
+      & .error-message {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        font-size: 0.75rem;
+        color: var(--error-color);
+        margin: 0.25rem 0 0;
       }
     }
     
@@ -196,6 +216,10 @@ fieldset {
       background: none;
       color: var(--font-color);
       padding: var(--element-padding);
+
+      &.invalid {
+        border-bottom-color: var(--error-color);
+      }
     }
   }
 

@@ -282,14 +282,14 @@ mainForm.addEventListener('submit', (e) => {
 });
 
 // Listen for frontmatter component selection
-const frontmatterSelectMenu = document.querySelector('.select-component-menu');
-frontmatterSelectMenu.addEventListener('click', (e) => {
-  const selectedComponent = e.target.innerHTML;
+window.electronAPI.receiveFromOtherRenderer((event, objectReceived) => {
+  // Do something with the received object
 
+  console.log(`objectReceived: ${objectReceived}`);
 
-
-  console.log(selectedComponent);
+  console.log(JSON.stringify(objectReceived, null, 2));
 });
+
 
 
 
