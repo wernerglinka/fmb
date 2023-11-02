@@ -61,6 +61,9 @@ body {
 h1, h2, h3 {
   font-weight: 400;
 }
+h3 {
+  text-transform: uppercase;
+}
 
 #frontmatter-container {
   position: relative;
@@ -170,6 +173,7 @@ fieldset {
 
     & span {
       flex: 0 0 6rem;
+      display: inline-block;
       margin-right: 1rem;
     }
 
@@ -198,9 +202,16 @@ fieldset {
   &.compose {
     display: flex;
     justify-content: flex-start;
+    margin-bottom: 2rem;
 
     > label {
       flex: 0 0 50%;
+      display: block;
+
+      & span {
+        display: block;
+        margin-bottom: 1rem;
+      }
     }
   }
 }

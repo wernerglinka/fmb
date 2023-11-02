@@ -171,22 +171,11 @@ const menu = [
         {
           label: app.name,
           submenu: [
-            {
-              label: 'About',
-              click: createAboutWindow,
-            },
+            { label: 'About', click: createAboutWindow, },
             { type: 'separator' },
-            {
-              label: 'Refresh MainWindow',
-              click: refreshMainWindow,
-              accelerator: 'CmdOrCtrl+R', 
-            },
+            { label: 'Refresh MainWindow', click: refreshMainWindow, accelerator: 'CmdOrCtrl+R', },
             { type: 'separator' },
-            {
-              label: 'Quit',
-              click: () => app.quit(),
-              accelerator: 'CmdOrCtrl+Q',
-            }
+            { label: 'Quit', click: () => app.quit(), accelerator: 'CmdOrCtrl+Q', }
           ],
         },
       ]
@@ -194,29 +183,30 @@ const menu = [
   {
     label: 'File',
     submenu: [
-      {
-        label: 'New Page', 
-      },
-      {
-        label: 'Open Page',
-      },
+      { label: 'New Page', },
+      { label: 'Open Page', },
       { type: 'separator' },
-      {
-        label: 'Close Window',
-        click: () => app.quit(),
-        accelerator: 'CmdOrCtrl+Q',
-      }
+      { label: 'Close Window', click: () => app.quit(), accelerator: 'CmdOrCtrl+Q', }
     ],
   },
+  {
+    label: "Edit",
+      submenu: [
+        { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
+        { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
+        { type: "separator" },
+        { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
+        { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
+        { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
+        { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+      ]
+    },
   ...(!isMac
     ? [
         {
           label: 'Help',
           submenu: [
-            {
-              label: 'About',
-              click: createAboutWindow,
-            },
+            { label: 'About', click: createAboutWindow, },
           ],
         },
       ]
@@ -237,22 +227,11 @@ const menu = [
   {
     label: 'Add Components',
     submenu: [
-      {
-        label: 'Text',
-        click: () => showComponentsWindow('text'),
-      },
-      {
-        label: 'Text Area',
-        click: () => showComponentsWindow('textarea'),
-      },
-      {
-        label: 'Object',
-        click: () => showComponentsWindow('object'),
-      },
-      {
-        label: 'Array',
-        click: () => showComponentsWindow('array'),
-      },
+      { label: 'Text', click: () => showComponentsWindow('text'), },
+      { label: 'Text Area', click: () => showComponentsWindow('textarea'), },
+      { label: 'Checkbox', click: () => showComponentsWindow('checkbox'), },
+      { label: 'Object', click: () => showComponentsWindow('object'), },
+      { label: 'Array', click: () => showComponentsWindow('array'), },
     ],
   }
 ];
