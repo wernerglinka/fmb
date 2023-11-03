@@ -7,8 +7,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSchemas: (path) => ipcRenderer.invoke('getSchemas', path),
   receiveComponentType: (callback) => ipcRenderer.on('componentType', callback),
   sendToOtherRenderer: (targetIdentifier, objectToSend) => ipcRenderer.send('send-to-other-renderer', { targetIdentifier, objectToSend }),
-  receiveFromOtherRenderer: (callback) => ipcRenderer.on('receive-from-other-renderer', callback)
-
-
+  receiveFromOtherRenderer: (callback) => ipcRenderer.on('receive-from-other-renderer', callback),
+  sendMessageToMain: (message) => ipcRenderer.send('message-to-main', message),
+  receiveMessage: (channel, func) => { 
+    ipcRenderer.on(channel, (event, ...args) => func(...args));
+  }
 })
 

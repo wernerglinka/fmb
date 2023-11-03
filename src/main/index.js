@@ -33,6 +33,11 @@ function setWindowIdentifier(win, identifier) {
   windows.set(identifier, win);
 }
 
+function unsetWindowIdentifier(win) {
+  windows.delete(win.identifier);
+  win.identifier = null;
+}
+
 // Main Window
 function createMainWindow() {
   mainWindow = new BrowserWindow({
@@ -98,9 +103,13 @@ function createComponentWindow() {
   componentsWindow.on('close', e => {
     e.preventDefault();
     componentsWindow.hide();
+
+    // send message to renderer process to reset the form
+    componentsWindow.webContents.send('to-componentsWindow', 'windowClosed');
   });
 };
 
+// Refresh the main window utility function for development
 function refreshMainWindow() {
   mainWindow.reload();
 
@@ -110,6 +119,7 @@ function refreshMainWindow() {
   });
 };
 
+// Show/create the components window and send the component type to it
 function showComponentsWindow(componentType) {
   componentsWindow.webContents.send('componentType', componentType);
   componentsWindow.show();
@@ -151,7 +161,6 @@ app.whenReady().then(() => {
     })
   });
 
-
   // handle dialog requests from the renderer process
   ipcMain.handle('dialog', (e, method, params) => {
     return dialog[method](mainWindow, params)});
@@ -169,7 +178,16 @@ app.whenReady().then(() => {
     if (targetWindow) {
       targetWindow.webContents.send('receive-from-other-renderer', objectToSend);
     }
-});
+  });
+
+  // handle message from renderer process to main process
+  ipcMain.on('message-to-main', (event, message) => {
+    if (message === 'closeComponentsWindow') {
+      componentsWindow.hide();
+      // send message to renderer process to reset the form
+      componentsWindow.webContents.send('to-componentsWindow', 'windowClosed');
+    }
+  });
 
   // get the page object from the renderer process
   ipcMain.handle('writeObjectToFile', (e, pageObject) => {
@@ -250,15 +268,14 @@ const menu = [
   {
     label: 'Add Components',
     submenu: [
-      { label: 'Text', click: () => showComponentsWindow('text'), },
-      { label: 'Text Area', click: () => showComponentsWindow('textarea'), },
-      { label: 'Checkbox', click: () => showComponentsWindow('checkbox'), },
-      { label: 'Object', click: () => showComponentsWindow('object'), },
-      { label: 'Array', click: () => showComponentsWindow('array'), },
+      { label: 'Text', click: () => showComponentsWindow('text'), accelerator: "CmdOrCtrl+T"},
+      { label: 'Text Area', click: () => showComponentsWindow('textarea'), accelerator: "CmdOrCtrl+Alt+T"},
+      { label: 'Checkbox', click: () => showComponentsWindow('checkbox'), accelerator: "CmdOrCtrl+C"},
+      { label: 'Object', click: () => showComponentsWindow('object'), accelerator: "CmdOrCtrl+O"},
+      { label: 'Array', click: () => showComponentsWindow('array'), accelerator: "CmdOrCtrl+A"},
     ],
   }
 ];
-
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {

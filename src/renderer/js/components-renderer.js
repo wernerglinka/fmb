@@ -205,15 +205,16 @@ function createComponent(type) {
 
 
 // get the component container, this is where the form will be added
-const componentContainer = document.getElementById("component-container");
-const addComponentButton = document.getElementById("add-component");
+let componentContainer = document.getElementById("component-container");
+let addComponentButton = document.getElementById("add-component");
 let componentsWhereSend = false;
 
-console.log("components-renderer.js loaded");
-
-// create a form
+// create a form and insert into the DOM
 const form = document.createElement('form');
 form.setAttribute('id', "component-form");
+// add the form to the component container
+componentContainer.appendChild(form);
+
 
 // The form will be finished with a menu selection from the user.
 // The selection will be communicated via IPC from the main process
@@ -222,8 +223,6 @@ window.electronAPI.receiveComponentType((event, componentType) => {
   // We got a new elementtype, so we disable the button until the user
   // has add label text to the element
   addComponentButton.disabled = true;
-
-  console.log(`Received component type: ${componentType}`);
 
   // Add a header to this element
   const elementHeader = document.createElement('h3');
@@ -268,14 +267,12 @@ window.electronAPI.receiveComponentType((event, componentType) => {
       addComponentButton.disabled = true;
     }
   });
-  
+
   // add the new element to the form
   form.appendChild(newElement);
-  // add the form to the component container
   componentContainer.appendChild(form);
-
+  
 });
-
 
 // wait for the user to submit the form
 addComponentButton.addEventListener('click', async (event) => {
@@ -289,19 +286,13 @@ addComponentButton.addEventListener('click', async (event) => {
       cancelId: 1,
       defaultId: 0,
       title: 'Warning',
-      message: 'You have already added components to the page. OK will add these components, Cancel will discard them and remove them from this window.',
+      message: 'You have already added components to the page. OK will add these components, Cancel will discard them and remove this window.',
     };
     const result = await window.electronAPI.openDialog('showMessageBox', dialogConfig);
 
     if (result.response === 1) {
-      // remove all form elements
-      componentContainer.innerHTML = "";
-      // reset the form
-      form.reset();
-      // reset the button
-      addComponentButton.disabled = true;
-      // reset the flag
-      componentsWhereSend = false;
+      // send a message to the main renderer to close the window
+      window.electronAPI.sendMessageToMain('closeComponentsWindow');
 
       return;
     }
@@ -339,4 +330,16 @@ addComponentButton.addEventListener('click', async (event) => {
 
   // set the flag
   componentsWhereSend = true;
+});
+
+//receive a message from the main renderer
+window.electronAPI.receiveMessage('to-componentsWindow', (message) => {
+  if (message === 'windowClosed') {
+    // remove all form elements
+    form.innerHTML = '';
+    // reset the button
+    addComponentButton.disabled = true;
+    // reset the flag
+    componentsWhereSend = false;
+  }
 });
