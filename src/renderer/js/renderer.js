@@ -1,4 +1,12 @@
-// renderer.js is of type module, so we can use "await" in it.
+/** 
+ * @function isValidLabel
+ * @param {string} label
+ * @returns {boolean}
+ * @description checks if the label is not empty and contains only letters and numbers
+*/
+function isValidLabel(label) {
+  return /^[A-Za-z0-9]+$/.test(label);
+}
   
 /**
  * @function renderSchema
@@ -126,7 +134,7 @@ function createFormElementFromSchema(value, parent) {
  * @returns void
  */
 function renderMainForm(schemas) {
-  const form = document.getElementById('main-form');
+  const form = document.getElementById('existing-schemas');
   
   // check if there are any schemas and render them first
   // used for page specific frontmatter components
@@ -185,29 +193,282 @@ function convertFormdataToObject(flatValues) {
 }
 
 /**
- * @function writeObjectToFile
- * @description This function will get the form data, convert it to an object and write it to a file
- * @returns void
+ * @function getSchemasObject
+ * @description This function will get the form data from the schemas and convert it to an object
+ * @returns the schema object
  */
-function writeObjectToFile() {
-  // Get all form data manually since the form data object will not include
+function getSchemasObject() {
+  // Get all form data from schemas manually since the form data object will not include
   // any unchecked checkboxes. If we use formData and then check for checkboxes, we will 
   // loose the order of object properties
-  const allFormElements = document.querySelectorAll(".form-element");
+  const allSchemaElements = document.querySelectorAll("#existing-schemas .form-element");
   const formDataObj = {};
-  allFormElements.forEach(formElement => {
+  allSchemaElements.forEach(formElement => {
     const key = formElement.querySelector("input, textarea, select").name;
-    const value = formElement.querySelector("input, textarea, select").value;
+    const type = formElement.querySelector("input, textarea, select").type;
+    const value = type !== 'checkbox' ? formElement.querySelector("input, textarea, select").value : formElement.querySelector("input").checked;
     formDataObj[key] = value;
   });
 
-  // Create the page object. This step will create a deep object, e.g. 
+  // Create the schema object. This step will create a deep object, e.g. 
   // "seo.title": "My Title" will be converted to { seo: { title: "My Title" } }
-  const pageObject = convertFormdataToObject(formDataObj);
+  return convertFormdataToObject(formDataObj);
 
-  // send the page object to the main process
-  window.electronAPI.writeObjectToFile(pageObject);
 };
+
+/**
+ * @function createComponent
+ * @param {string} type 
+ * @returns a form element
+ */
+function createComponent(type) {
+  // create a div to hold the form element
+  const div = document.createElement('div');
+  div.classList.add('compose', 'form-element');
+  
+  if( type === 'text' ) {
+    /**
+     * Create the text input object
+     * {
+     *   "label": "",
+     *   "type": "variable",
+     *   "widget": "text",
+     *   "value": "",
+     *   "placeholder": ""
+     * } 
+     */ 
+
+    // create the label for label input
+    const label = document.createElement('label');
+    label.innerHTML = `<span>Required label for Text element</span>`;
+
+    // create the label input
+    const labelInput = document.createElement('input');
+    labelInput.setAttribute('type', "text");
+    labelInput.classList.add('element-label');
+    labelInput.placeholder = "Label Placeholder";
+
+    // create wrapper for input for styling
+    const labelInputWrapper = document.createElement('div');
+    labelInputWrapper.appendChild(labelInput);
+
+    // add the input to the label element
+    label.appendChild(labelInputWrapper);
+    
+    // add the label to the div
+    div.appendChild(label);
+    
+    // create the label for text input
+    const labelText = document.createElement('label');
+    labelText.innerHTML = `<span>Optional Text for Text element</span>`;
+
+    // create the input
+    const textInput = document.createElement('input');
+    textInput.setAttribute('type', "text");
+    textInput.dataset.type = "text";
+    textInput.classList.add('element-value');
+    textInput.placeholder = "Text Placeholder";
+
+    // create wrapper for input for styling
+    const inputWrapper = document.createElement('div');
+    inputWrapper.appendChild(textInput);
+
+    // add the input to the label element
+    labelText.appendChild(inputWrapper);
+    
+    // add the label to the div
+    div.appendChild(labelText);
+  }
+
+  if( type === 'textarea' ) {
+    /**
+     * Create the text input object
+     * {
+     *   "label": "",
+     *   "type": "variable",
+     *   "widget": "textarea",
+     *   "value": "",
+     *   "placeholder": ""
+     * } 
+     */ 
+
+    // create the label for label input
+    const label = document.createElement('label');
+    label.innerHTML = `<span>Required label for Textarea element</span>`;
+
+    // create the label input
+    const labelInput = document.createElement('input');
+    labelInput.setAttribute('type', "text");
+    labelInput.classList.add('element-label');
+    labelInput.placeholder = "Label Placeholder";
+
+    // create wrapper for input for styling
+    const labelInputWrapper = document.createElement('div');
+    labelInputWrapper.appendChild(labelInput);
+
+    // add the input to the label element
+    label.appendChild(labelInputWrapper);
+    
+    // add the label to the div
+    div.appendChild(label);
+    
+    // create the label for textarea
+    const labelText = document.createElement('label');
+    labelText.innerHTML = `<span>Optional Text for Textarea element</span>`;
+
+    // create the textarea
+    const textareaInput = document.createElement('textarea');
+    textareaInput.classList.add('element-value');
+    textareaInput.dataset.type = "textarea";
+    textareaInput.placeholder = "Text Placeholder";
+
+    // create wrapper for input for styling
+    const inputWrapper = document.createElement('div');
+    inputWrapper.appendChild(textareaInput);
+
+    // add the input to the label element
+    labelText.appendChild(inputWrapper);
+    
+    // add the label to the div
+    div.appendChild(labelText);
+  }
+
+  if( type === 'checkbox' ) {
+    /**
+     * Create the checkbox input object
+     * {
+     *   "label": "",
+     *   "type": "variable",
+     *   "widget": "checkbox",
+     *   "value": "false",
+     * } 
+     */ 
+
+    // create the label for label input
+    const label = document.createElement('label');
+    label.innerHTML = `<span>Required label for Checkbox element</span>`;
+
+    // create the label input
+    const labelInput = document.createElement('input');
+    labelInput.setAttribute('type', "text");
+    labelInput.classList.add('element-label');
+    labelInput.placeholder = "Label Placeholder";
+
+    // create wrapper for input for styling
+    const labelInputWrapper = document.createElement('div');
+    labelInputWrapper.appendChild(labelInput);
+
+    // add the input to the label element
+    label.appendChild(labelInputWrapper);
+    
+    // add the label to the div
+    div.appendChild(label);
+    
+    // create the label for checkbox
+    const labelText = document.createElement('label');
+    labelText.innerHTML = `<span>Initial state for element</span>`;
+
+    // create the checkbox
+    const checkboxInput = document.createElement('input');
+    checkboxInput.value = "false";
+    checkboxInput.classList.add('element-value');
+    checkboxInput.dataset.type = "checkbox";
+    checkboxInput.setAttribute('type', "checkbox");
+    checkboxInput.setAttribute('role', "switch");
+
+    // create wrapper for input for styling
+    const inputWrapper = document.createElement('div');
+    inputWrapper.appendChild(checkboxInput);
+
+    // add the input to the label element
+    labelText.appendChild(inputWrapper);
+    
+    // add the label to the div
+    div.appendChild(labelText);
+  }
+
+  //add the delete button
+  const deleteButton = document.createElement('div');
+  deleteButton.classList.add('delete-button');
+  deleteButton.innerHTML = "-";
+  deleteButton.addEventListener('click', (e) => {
+    e.target.parentElement.remove();
+  });
+  div.appendChild(deleteButton);
+
+  return div; 
+};
+
+// Add drag and drop functionality to the form
+function dragStart(event) {
+  event.dataTransfer.setData("text/plain", event.target.dataset.component);
+}
+
+function dragOver(event) {
+  event.preventDefault();
+}
+
+/**
+ * @function drop
+ * @param {*} event 
+ * @description This function will handle the drop event. It will create a new element
+ * in the receiving container with the dropped data
+ */
+function drop(event) {
+  event.preventDefault();
+  const component = event.dataTransfer.getData("text/plain");
+  
+  // Create a new element in the receiving container with the dropped data
+  const newItem = document.createElement("div");
+  newItem.textContent = component;
+  newItem.classList.add('data-component', "draggable");
+  newItem.draggable = true;
+
+  // create new element with requested component type
+  const newElement = createComponent(component);
+  
+  // add an eventlistener to the label input to enable the button
+  // when the user has added text to the label input and all other
+  // label inputs have text
+  const newElementLabelInput = newElement.querySelector('.element-label');
+  newElementLabelInput.addEventListener('change', (e) => {
+    const thisElement = e.target;
+    
+    // check if the input is valid
+    if( !isValidLabel(thisElement.value) ) {
+      showErrorMessage(thisElement, "Label must only use characters and numbers");
+      return;
+    }
+
+    // remove error message if it exists
+    if (thisElement.classList.contains('invalid')) {
+      removeErrorMessage(thisElement);
+    }
+    
+    const allLabelInputs = document.querySelectorAll('.element-label');
+    let isEnabled = true;
+    
+    // check if any input is empty
+    allLabelInputs.forEach(input => {
+      // check if the input is valid
+      if( !isValidLabel(input.value.trim()) ) {
+        isEnabled = false;
+      }
+    });
+
+    /*
+    // enable the button if all inputs have valid text
+    if( isEnabled ) {
+      addComponentButton.disabled = false;
+    } else {
+      addComponentButton.disabled = true;
+    }
+    */
+  });
+
+  // Append the new item to the receiving container
+  event.target.appendChild(newElement);
+}
 
 
 /******************************************************************************
@@ -252,30 +513,7 @@ availableComponents.forEach((component, index) => {
   leftPanel.appendChild(div);
 });
 
-// Add drag and drop functionality to the form
-function dragStart(event) {
-    event.dataTransfer.setData("text/plain", event.target.dataset.component);
-}
 
-function dragOver(event) {
-    event.preventDefault();
-}
-
-function drop(event) {
-    event.preventDefault();
-    const data = event.dataTransfer.getData("text/plain");
-    
-    // Create a new element in the receiving container with the dropped data
-    const newItem = document.createElement("div");
-    newItem.textContent = data;
-    newItem.classList.add('data-component', "draggable");
-    newItem.draggable = true;
-  
-    // Append the new item to the receiving container
-    event.target.appendChild(newItem);
-
-    
-}
 
 // at this point the left panel is ready to be used. On to select the schemas directory
 
@@ -304,13 +542,23 @@ function drop(event) {
 
   // Add the dropzone to the form
   const dropzone = document.createElement('div');
-  dropzone.id = 'frontmatter';
+  dropzone.id = 'dropzone';
   dropzone.classList.add('dropzone');
   dropzone.addEventListener("dragover", dragOver);
   dropzone.addEventListener("drop", drop);
   mainForm.appendChild(dropzone);
-  
 
+  // Add a clear-all button to dropzone
+  const clearAllButton = document.createElement('button');
+  clearAllButton.classList.add('form-button');
+  clearAllButton.id ='clear-all';
+  clearAllButton.innerHTML = "Clear Dropzone";
+  clearAllButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    dropzone.innerHTML = "";
+  });
+  mainForm.appendChild(clearAllButton);
+  
 })();
 
 
@@ -320,29 +568,44 @@ function drop(event) {
 
 
 
-// Listen for form submittion
+/**
+ *  Listen for form submittion
+ *  We'll have to preprocess form data that are added via the drag and drop
+ *  functionality. We'll have to convert the form data to an object and then
+ *  write it to a file.
+ */ 
 const mainForm = document.getElementById('main-form');
 mainForm.addEventListener('submit', (e) => {
   e.preventDefault();
 
-  // get form data, convert to object and write to file
-  writeObjectToFile();
+  // preprocess form data in the dropzone
+  const dropzone = document.getElementById('dropzone');
+  const dropzoneElements = dropzone.querySelectorAll('.compose');
+  const dropzoneValues = [];
+
+  if( dropzoneElements.length > 0 ) {
+    dropzoneElements.forEach(element => {
+      const label = element.querySelector('.element-label').value;
+      const value = element.querySelector('.element-value').value;
+      const placeholder = element.querySelector('.element-value').placeholder;
+      const widget = element.querySelector('.element-value').dataset.type;
+
+      console.log(value);
+
+      dropzoneValues.push({
+        [label]: widget !== "checkbox" ? value : element.querySelector('.element-value').checked
+      });
+    });
+  }
+
+  // get form data from the schemas
+  const schemaValues = getSchemasObject();
+
+  // merge the dropzone values with the schema values
+  const pageObject = Object.assign({}, schemaValues, ...dropzoneValues);
+
+  console.log(JSON.stringify(pageObject, null, 2));
+
+  // send the page object to the main process
+  window.electronAPI.writeObjectToFile(pageObject);
 });
-
-
-
-
-
-
-// Listen for frontmatter component selection
-window.electronAPI.receiveFromOtherRenderer((event, objectReceived) => {
-  // Do something with the received object
-
-  console.log(`objectReceived: ${objectReceived}`);
-
-  console.log(JSON.stringify(objectReceived, null, 2));
-});
-
-
-
-

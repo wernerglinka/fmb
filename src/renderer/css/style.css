@@ -14,37 +14,12 @@
   outline: none;
 }
 
-.about-window {
-  min-height: 100vh;
-  padding: 0;
-
-  & .about-wrapper {
-    padding: 2rem;
-  }
-
-  & svg {
-    width: 6.75rem;
-    height: 6.75rem;
-    fill: none;
-    stroke: var(--font-color);
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  padding: var(--body-padding);
-  background-image: linear-gradient(to bottom, #5397be, #3a4076);
-  background-repeat: no-repeat;
-  background-size: cover;
-  color: var(--font-color);
-  font-family: 'Open Sans', sans-serif;
-}
-
-.titlebar {
+/**
+ * Since we use a frameless window, we need to
+ * add a titlebar to the top of the window so we maintain
+ * the ability to drag the window around.
+ */
+ .titlebar {
   position: fixed;
   top: 0;
   left: 0;
@@ -57,6 +32,20 @@ body {
 
 .titlebar-button {
   -webkit-app-region: no-drag;
+}
+
+/**
+ * Main window styles
+ */
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: var(--body-padding);
+  background-image: linear-gradient(to bottom, #5397be, #3a4076);
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: var(--font-color);
+  font-family: 'Open Sans', sans-serif;
 }
 
 h1, h2, h3 {
@@ -75,6 +64,9 @@ h3 {
   display: flex;
 }
 
+/**
+ * Left panel holds all the component selections
+ */
 #component-selections {
   width: 0;
   overflow-x: hidden;
@@ -94,6 +86,9 @@ h3 {
   text-transform: uppercase;
 }
 
+/**
+ * Right panel holds the form
+ */
 #frontmatter-container {
   flex: 1;
   position: relative;
@@ -108,12 +103,15 @@ h3 {
   padding: 5rem 1rem 2rem;
 }
 
+/**
+ * The panel-left-open and panel-left-close
+ * are the buttons that open and close the left panel
+ */
 .left-panel-open #component-selections {
   width: 10rem;
   padding: 1rem;
   margin-right: 1rem;
 }
-
 #panel-left-open,
 #panel-left-close {
   position: absolute;
@@ -148,6 +146,9 @@ h3 {
   }
 }
 
+/**
+ * Global button styles
+ */
 .form-button {
   display: inline-flex;
   justify-content: center;
@@ -180,7 +181,7 @@ h3 {
 
 /** 
  * form styles 
- */
+ 
 .frontmatter-select {
   position: absolute;
   top: 1rem;
@@ -216,11 +217,14 @@ h3 {
     }
   }
 }
+*/
 
+/**
+ * Main form styles
+ */
 #main-form {
   position: relative;
   width: 100%;
-  max-width: 30rem;
   padding-bottom: 3rem;
 }
 
@@ -230,20 +234,25 @@ h3 {
   left: 0;
 }
 
-#frontmatter {
-  padding: 1rem;
+/**
+ * Dropzone holds all the form elements that are added 
+ * to the form from the component selection panel (left panel)
+ */
+#dropzone {
   min-height: 10rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--elements-radius);
   margin-bottom: 3rem;
 }
 
-::placeholder {
-  color: var(--font-color);
-  opacity: 0.5;
-  font-style: italic;
+#clear-all {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 2;
 }
 
+/*
+ * Fieldsets and form elements
+ */
 fieldset {
   position: relative;
   margin: 2rem 0;
@@ -253,7 +262,6 @@ fieldset {
 }
 
 .form-element {
-  width: 100%;
   font-size: 0.8rem;
   margin-bottom: 0.75rem;
 
@@ -305,12 +313,18 @@ fieldset {
   }
 
   &.compose {
+    position: relative;
     display: flex;
     justify-content: flex-start;
+    align-items: center;
+    border: 1px dotted var(--border-color);
+    border-radius: var(--elements-radius);
+    padding: 0.5rem;
     margin-bottom: 2rem;
 
+
     > label {
-      flex: 0 0 50%;
+      flex: 0 0 47%;
       display: block;
 
       & span {
@@ -318,7 +332,30 @@ fieldset {
         margin-bottom: 1rem;
       }
     }
+
+    .delete-button {
+      background: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid var(--border-color);
+      flex: 0 0 1.6rem;
+      height: 1.6rem;
+      border-radius: 50%;
+      color: var(--font-color);
+      cursor: pointer;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+    }
   }
+}
+
+::placeholder {
+  color: var(--font-color);
+  opacity: 0.5;
+  font-style: italic;
 }
 
 
@@ -396,4 +433,27 @@ input:where([type="checkbox"][role="switch"]):checked::before {
 
 input:where([type="checkbox"][role="switch"]):disabled {
   opacity: 0.4;
+}
+
+
+/**
+ * About window styles
+ */
+ .about-window {
+  min-height: 100vh;
+  padding: 0;
+
+  & .about-wrapper {
+    padding: 2rem;
+  }
+
+  & svg {
+    width: 6.75rem;
+    height: 6.75rem;
+    fill: none;
+    stroke: var(--font-color);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 }
