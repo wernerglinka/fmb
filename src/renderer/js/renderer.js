@@ -625,19 +625,20 @@ async function renderMainWindow(howToProceed) {
     leftPanel.appendChild(div);
   });
 
-
-
-  // at this point the left panel is ready to be used. 
+  // >>>> at this point the left panel is ready to be used. 
   
+  /**
+   * If getSchema was selected in the welcome window, we'll have to get the schemas
+   * from the main process and start building the form from the schemas
+   */
   if (howToProceed === "getSchema") {
-    //On to select the schemas directory
     // Get the project schemas directory from the main process
+    // the user will select the directory via a native dialog box
     const dialogConfig = {
       message: 'Select the Schemas Directory',
       buttonLabel: 'Select',
       properties: ['openDirectory']
     };
-
     const schemasDirectory = await window.electronAPI.openDialog('showOpenDialog', dialogConfig);
     
     // Get the schemas in the directory from the main process
@@ -650,20 +651,10 @@ async function renderMainWindow(howToProceed) {
     }
   }
 
-  // add a button wrapper to the form
-  const buttonWrapper = document.createElement('div');
-  buttonWrapper.id = 'button-wrapper';
-  mainForm.appendChild(buttonWrapper);
-
-  // add the submit button
-  const submitButton = document.createElement('button');
-  submitButton.setAttribute('type', "submit");
-  submitButton.id ='submit-primary';
-  submitButton.classList.add('form-button');
-  submitButton.innerHTML = "Submit";
-  buttonWrapper.appendChild(submitButton);
-
-
+  /**
+   * Prepare the form for the drag and drop functionality by adding a dropzone
+   * We'll also add a button wrapper to hold all buttons for the form
+   */
   // Add the dropzone to the form
   const dropzone = document.createElement('div');
   dropzone.id = 'dropzone';
@@ -672,7 +663,20 @@ async function renderMainWindow(howToProceed) {
   dropzone.addEventListener("drop", drop);
   mainForm.appendChild(dropzone);
 
-  // Add a clear button to dropzone
+  // add a button wrapper to the form
+  const buttonWrapper = document.createElement('div');
+  buttonWrapper.id = 'button-wrapper';
+  mainForm.appendChild(buttonWrapper);
+
+  // Add the SUBMIT button
+  const submitButton = document.createElement('button');
+  submitButton.setAttribute('type', "submit");
+  submitButton.id ='submit-primary';
+  submitButton.classList.add('form-button');
+  submitButton.innerHTML = "Submit";
+  buttonWrapper.appendChild(submitButton);
+
+  // Add a CLEAR DROPZONE button
   const clearDropzoneButton = document.createElement('button');
   clearDropzoneButton.classList.add('form-button');
   clearDropzoneButton.id ='clear-dropzone';
@@ -683,7 +687,7 @@ async function renderMainWindow(howToProceed) {
   });
   buttonWrapper.appendChild(clearDropzoneButton);
 
-  // Add a CLEAR ALL button to dropzone
+  // Add a CLEAR ALL button
   const schemaContainer = document.getElementById('existing-schemas');
   const clearAllButton = document.createElement('button');
   clearAllButton.classList.add('form-button');
@@ -708,6 +712,9 @@ async function renderMainWindow(howToProceed) {
     e.preventDefault();
 
     // preprocess form data in the dropzone
+    // form elements in the dropzone are composed from two input fields
+    // one for the label and one for the value. We'll get the values
+    // from the input fields and create an object from them
     const dropzone = document.getElementById('dropzone');
     const dropzoneElements = dropzone.querySelectorAll('.compose');
     const dropzoneValues = [];
@@ -716,10 +723,7 @@ async function renderMainWindow(howToProceed) {
       dropzoneElements.forEach(element => {
         const label = element.querySelector('.element-label').value;
         const value = element.querySelector('.element-value').value;
-        const placeholder = element.querySelector('.element-value').placeholder;
         const widget = element.querySelector('.element-value').dataset.type;
-
-        console.log(value);
 
         dropzoneValues.push({
           [label]: widget !== "checkbox" ? value : element.querySelector('.element-value').checked
@@ -727,12 +731,12 @@ async function renderMainWindow(howToProceed) {
       });
     }
 
-    // get form data from the schemas
+    /**
+     * Merge the schemas and dropzone values and write the resulting object to a file
+     */
     const schemaValues = getSchemasObject();
     // merge the dropzone values with the schema values
     const pageObject = Object.assign({}, schemaValues, ...dropzoneValues);
-
-    //console.log(JSON.stringify(pageObject, null, 2));
 
     // send the page object to the main process
     window.electronAPI.writeObjectToFile(pageObject);
