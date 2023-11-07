@@ -2,6 +2,7 @@
   --font-color: #fff;
   --border-color: #bbb;
   --error-color: red;
+  --hover-color: #fdfa72;
   --element-padding: 5px;
   --body-padding: 2rem;
   --submit-button-color:
@@ -46,6 +47,52 @@ body {
   background-size: cover;
   color: var(--font-color);
   font-family: 'Open Sans', sans-serif;
+}
+
+body.welcome {
+  padding: 0 var(--body-padding);
+  .main-header, #working-pane {
+    display: none;
+  }
+
+  .welcome-window {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  & ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    & li {
+      margin-bottom: 1.2rem;
+    }
+
+    & a {
+      cursor: pointer;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+
+      &:hover {
+        color: var(--hover-color);
+
+        & svg g {
+          stroke: var(--hover-color);
+        }
+      }
+    }
+  }
+
+  .listIcon {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 1rem;
+  }
 }
 
 h1, h2, h3 {
@@ -100,7 +147,7 @@ h3 {
   justify-content: center;
   align-items: flex-start;
   border-radius: 1rem;
-  padding: 5rem 1rem 2rem;
+  padding: 2rem 1rem;
 }
 
 /**
@@ -228,10 +275,13 @@ h3 {
   padding-bottom: 3rem;
 }
 
-#submit-primary {
+#button-wrapper {
   position: absolute;
-  bottom: 1rem;
+  bottom: 0;
   left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
 }
 
 /**
@@ -240,14 +290,8 @@ h3 {
  */
 #dropzone {
   min-height: 10rem;
-  margin-bottom: 3rem;
-}
-
-#clear-all {
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  z-index: 2;
+  padding-bottom: 2rem; /* a little room when dropzone is full */
+  margin-bottom: 2rem;
 }
 
 /*

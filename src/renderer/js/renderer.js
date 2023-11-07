@@ -7,6 +7,25 @@
 function isValidLabel(label) {
   return /^[A-Za-z0-9]+$/.test(label);
 }
+
+function showErrorMessage(element, message) {
+  element.classList.add('invalid');
+  // insert error message into the dom
+  const errorMessage = document.createElement('p');
+  errorMessage.classList.add('error-message');
+  errorMessage.innerHTML = message;
+  // insert the error message after the input
+  element.parentNode.insertBefore(errorMessage, element.nextSibling);
+}
+
+function removeErrorMessage(element) {
+  // remove the invalid classe
+  element.classList.remove('invalid');
+  // remove the error message if it exists
+  if( element.nextSibling.classList.contains('error-message') ) {
+    element.nextSibling.remove();
+  }
+}
   
 /**
  * @function renderSchema
@@ -134,17 +153,22 @@ function createFormElementFromSchema(value, parent) {
  * @returns void
  */
 function renderMainForm(schemas) {
-  const form = document.getElementById('existing-schemas');
-  
+  const form = document.getElementById('main-form');
+
   // check if there are any schemas and render them first
   // used for page specific frontmatter components
   if(schemas.length > 0) {
+    // add 'existing-schemas' container to the form
+    const existingSchemasContainer = document.createElement('div');
+    existingSchemasContainer.id = 'existing-schemas';
+    form.appendChild(existingSchemasContainer);
+
     // parse the schemas string
     const availableSchemas = schemas.map(schema => JSON.parse(schema));
 
     // loop over the schemas and create a form element for each
     availableSchemas.forEach(schema => {
-      renderSchema(schema, form);
+      renderSchema(schema, existingSchemasContainer);
     });
   }
 };
@@ -198,6 +222,10 @@ function convertFormdataToObject(flatValues) {
  * @returns the schema object
  */
 function getSchemasObject() {
+  const hasSchemas = document.getElementById('existing-schemas').querySelectorAll('.form-element').length > 0;
+  if( !hasSchemas ) {
+    return {};
+  }
   // Get all form data from schemas manually since the form data object will not include
   // any unchecked checkboxes. If we use formData and then check for checkboxes, we will 
   // loose the order of object properties
@@ -433,7 +461,7 @@ function drop(event) {
   const newElementLabelInput = newElement.querySelector('.element-label');
   newElementLabelInput.addEventListener('change', (e) => {
     const thisElement = e.target;
-    
+
     // check if the input is valid
     if( !isValidLabel(thisElement.value) ) {
       showErrorMessage(thisElement, "Label must only use characters and numbers");
@@ -470,75 +498,171 @@ function drop(event) {
   event.target.appendChild(newElement);
 }
 
-
-/******************************************************************************
- * Main render process
- ******************************************************************************/
-
-// Manage left panel visibility
-// The left panel holds all available components which may be dragged into the 
-// frontmatter pane. The left panel is hidden by default and can be toggled by
-// clicking the left panel icon in the top left corner of the app.
-const container = document.getElementById('working-pane');
-
-const leftPanelIcons = document.querySelectorAll('.left-panel');
-leftPanelIcons.forEach(icon => {
-  icon.addEventListener('click', () => {
-    // toggle the open class on the icons
-    leftPanelIcons.forEach(i => i.classList.toggle('open'));
-    // toggle the left-panel-open class on the container
-    container.classList.toggle('left-panel-open');
+/**
+ * @function waitForHowToProceed
+ * @returns a promise that resolves to the clicked button
+ */
+function waitForHowToProceed() {
+  return new Promise((resolve) => {
+    function buttonClickHandler(event) {
+      const clickedButton = event.target;
+      resolve(clickedButton);
+    }
+    const commonAncestor = document.getElementById('howToProceed');
+    commonAncestor.addEventListener('click', buttonClickHandler);
   });
-});
+}
 
-// Define the available components
-const availableComponents = [
-  "text",
-  "textarea",
-  "checkbox",
-  "object",
-  "array"
-];
+/**
+ * @function renderWelcomeWindow
+ * @returns a promise that resolves to the clicked button
+ */
+async function renderWelcomeWindow() {
+  const mainWindow = document.body;
+  mainWindow.classList.add('welcome');
 
-// Add a visual placeholder for each component into the left panel
-const leftPanel = document.getElementById('component-selections');
-availableComponents.forEach((component, index) => {
-  const div = document.createElement('div');
-  div.classList.add('component-selection', 'draggable');
-  div.id = `component-${index}`;
-  div.setAttribute('draggable', true);
-  div.setAttribute('data-component', component);
-  div.addEventListener('dragstart', dragStart);
-  div.innerHTML = component;
-  leftPanel.appendChild(div);
-});
+  // Create the welcome window
+  const welcomeWindow = document.createElement('div');
+  welcomeWindow.classList.add('welcome-window');
 
+  const welcomeContent = `
+    <h1>Welcome to the Frontmatter Composer</h1>
+    <ul id="howToProceed">
+      <li>
+        <a id="getSchema" data-proceed="getSchema">   
+          <svg class="listIcon" viewBox="0 0 22 26" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+              <g stroke="#ffffff" stroke-width="2">
+                <g id="file-code" transform="translate(3, 3)">
+                  <path d="M10.5,0 L2,0 C0.8954305,0 0,0.8954305 0,2 L0,18 C0,19.1045695 0.8954305,20 2,20 L14,20 C15.1045695,20 16,19.1045695 16,18 L16,5.5 L10.5,0 Z" id="Path"></path>
+                  <polyline id="Path" points="10 0 10 6 16 6"></polyline>
+                  <polyline id="Path" points="6 11 4 13 6 15"></polyline>
+                  <polyline id="Path" points="10 15 12 13 10 11"></polyline>
+                </g>
+              </g>
+            </g>
+          </svg>
+          Load a Schema to get going</a>
+      </li>
+      <li>
+        <a id="fromScratch" data-proceed="fromScratch">
+          <svg class="listIcon" viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+              <g stroke="#ffffff" stroke-width="2">
+                <g id="list-plus" transform="translate(3, 2.5)">
+                  <line x1="8" y1="6.5" x2="0" y2="6.5" id="Path"></line>
+                  <line x1="13" y1="0.5" x2="0" y2="0.5" id="Path"></line>
+                  <line x1="13" y1="12.5" x2="0" y2="12.5" id="Path"></line>
+                  <line x1="15" y1="3.5" x2="15" y2="9.5" id="Path"></line>
+                  <line x1="18" y1="6.5" x2="12" y2="6.5" id="Path"></line>
+                </g>
+              </g>
+            </g>
+          </svg>
+          Build from Scratch</a></li>
+    </ul>
+    `;
+  welcomeWindow.innerHTML = welcomeContent;
+  mainWindow.appendChild(welcomeWindow);
 
+  // wait for button click and then proceed
+  const whatToDo = await waitForHowToProceed();
 
-// at this point the left panel is ready to be used. On to select the schemas directory
+  if (whatToDo) {
+    return whatToDo.dataset.proceed;
+  } else {
+    return "fromScratch";
+  }
+};
 
 
 // Get the project schemas directory from the main process and then the schemas in the directory
 // from the main process. Then build the form from the schemas.
 // This part of the process is wrapped in an async function so we can use await
-(async function mainRenderer() {
-  // Get the project schemas directory from the main process
-  const dialogConfig = {
-    message: 'Select the Schemas Directory',
-    buttonLabel: 'Select',
-    properties: ['openDirectory']
-  };
-
-  const schemasDirectory = await window.electronAPI.openDialog('showOpenDialog', dialogConfig);
+async function renderMainWindow(howToProceed) {
+  // remove the welcome window
+  const welcomeWindow = document.querySelector('.welcome-window');
+  welcomeWindow.remove();
+  document.body.classList.remove('welcome');
   
-  // Get the schemas in the directory from the main process
-  let schemas = [];
-  if(schemasDirectory.filePaths[0] !== undefined) {
-    schemas = await window.electronAPI.getSchemas(schemasDirectory.filePaths[0]);
+  
+  // Manage left panel visibility
+  // The left panel holds all available components which may be dragged into the 
+  // frontmatter pane. The left panel is hidden by default and can be toggled by
+  // clicking the left panel icon in the top left corner of the app.
+  const container = document.getElementById('working-pane');
+  const mainForm = document.getElementById('main-form');
+  const leftPanelIcons = document.querySelectorAll('.left-panel');
+
+  leftPanelIcons.forEach(icon => {
+    icon.addEventListener('click', () => {
+      // toggle the open class on the icons
+      leftPanelIcons.forEach(i => i.classList.toggle('open'));
+      // toggle the left-panel-open class on the container
+      container.classList.toggle('left-panel-open');
+    });
+  });
+
+  // Define the available components
+  const availableComponents = [
+    "text",
+    "textarea",
+    "checkbox",
+    "object",
+    "array"
+  ];
+
+  // Add a visual placeholder for each component into the left panel
+  const leftPanel = document.getElementById('component-selections');
+  availableComponents.forEach((component, index) => {
+    const div = document.createElement('div');
+    div.classList.add('component-selection', 'draggable');
+    div.id = `component-${index}`;
+    div.setAttribute('draggable', true);
+    div.setAttribute('data-component', component);
+    div.addEventListener('dragstart', dragStart);
+    div.innerHTML = component;
+    leftPanel.appendChild(div);
+  });
+
+
+
+  // at this point the left panel is ready to be used. 
+  
+  if (howToProceed === "getSchema") {
+    //On to select the schemas directory
+    // Get the project schemas directory from the main process
+    const dialogConfig = {
+      message: 'Select the Schemas Directory',
+      buttonLabel: 'Select',
+      properties: ['openDirectory']
+    };
+
+    const schemasDirectory = await window.electronAPI.openDialog('showOpenDialog', dialogConfig);
+    
+    // Get the schemas in the directory from the main process
+    let schemas = [];
+    if(schemasDirectory.filePaths[0] !== undefined) {
+      schemas = await window.electronAPI.getSchemas(schemasDirectory.filePaths[0]);
+
+      // Build the form from the schemas
+      renderMainForm(schemas);
+    }
   }
 
-  // Build the form from the schemas
-  renderMainForm(schemas);
+  // add a button wrapper to the form
+  const buttonWrapper = document.createElement('div');
+  buttonWrapper.id = 'button-wrapper';
+  mainForm.appendChild(buttonWrapper);
+
+  // add the submit button
+  const submitButton = document.createElement('button');
+  submitButton.setAttribute('type', "submit");
+  submitButton.id ='submit-primary';
+  submitButton.classList.add('form-button');
+  submitButton.innerHTML = "Submit";
+  buttonWrapper.appendChild(submitButton);
+
 
   // Add the dropzone to the form
   const dropzone = document.createElement('div');
@@ -548,17 +672,81 @@ availableComponents.forEach((component, index) => {
   dropzone.addEventListener("drop", drop);
   mainForm.appendChild(dropzone);
 
-  // Add a clear-all button to dropzone
-  const clearAllButton = document.createElement('button');
-  clearAllButton.classList.add('form-button');
-  clearAllButton.id ='clear-all';
-  clearAllButton.innerHTML = "Clear Dropzone";
-  clearAllButton.addEventListener('click', (e) => {
+  // Add a clear button to dropzone
+  const clearDropzoneButton = document.createElement('button');
+  clearDropzoneButton.classList.add('form-button');
+  clearDropzoneButton.id ='clear-dropzone';
+  clearDropzoneButton.innerHTML = "Clear Dropzone";
+  clearDropzoneButton.addEventListener('click', (e) => {
     e.preventDefault();
     dropzone.innerHTML = "";
   });
-  mainForm.appendChild(clearAllButton);
-  
+  buttonWrapper.appendChild(clearDropzoneButton);
+
+  // Add a CLEAR ALL button to dropzone
+  const schemaContainer = document.getElementById('existing-schemas');
+  const clearAllButton = document.createElement('button');
+  clearAllButton.classList.add('form-button');
+  clearAllButton.id ='clear-all';
+  clearAllButton.innerHTML = "Clear ALL";
+  clearAllButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    dropzone.innerHTML = "";
+    schemaContainer.innerHTML = "";
+    mainForm.reset();
+  });
+  buttonWrapper.appendChild(clearAllButton);
+
+
+  /**
+   *  Listen for form submittion
+   *  We'll have to preprocess form data that are added via the drag and drop
+   *  functionality. We'll have to convert the form data to an object and then
+   *  write it to a file.
+   */ 
+  mainForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // preprocess form data in the dropzone
+    const dropzone = document.getElementById('dropzone');
+    const dropzoneElements = dropzone.querySelectorAll('.compose');
+    const dropzoneValues = [];
+
+    if( dropzoneElements.length > 0 ) {
+      dropzoneElements.forEach(element => {
+        const label = element.querySelector('.element-label').value;
+        const value = element.querySelector('.element-value').value;
+        const placeholder = element.querySelector('.element-value').placeholder;
+        const widget = element.querySelector('.element-value').dataset.type;
+
+        console.log(value);
+
+        dropzoneValues.push({
+          [label]: widget !== "checkbox" ? value : element.querySelector('.element-value').checked
+        });
+      });
+    }
+
+    // get form data from the schemas
+    const schemaValues = getSchemasObject();
+    // merge the dropzone values with the schema values
+    const pageObject = Object.assign({}, schemaValues, ...dropzoneValues);
+
+    //console.log(JSON.stringify(pageObject, null, 2));
+
+    // send the page object to the main process
+    window.electronAPI.writeObjectToFile(pageObject);
+  });
+
+};
+
+/******************************************************************************
+ * Main render process
+ ******************************************************************************/
+(mainRenderer = async () => {
+  const howToProceed = await renderWelcomeWindow();
+
+  renderMainWindow(howToProceed);
 })();
 
 
@@ -566,46 +754,3 @@ availableComponents.forEach((component, index) => {
 
 
 
-
-
-/**
- *  Listen for form submittion
- *  We'll have to preprocess form data that are added via the drag and drop
- *  functionality. We'll have to convert the form data to an object and then
- *  write it to a file.
- */ 
-const mainForm = document.getElementById('main-form');
-mainForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-
-  // preprocess form data in the dropzone
-  const dropzone = document.getElementById('dropzone');
-  const dropzoneElements = dropzone.querySelectorAll('.compose');
-  const dropzoneValues = [];
-
-  if( dropzoneElements.length > 0 ) {
-    dropzoneElements.forEach(element => {
-      const label = element.querySelector('.element-label').value;
-      const value = element.querySelector('.element-value').value;
-      const placeholder = element.querySelector('.element-value').placeholder;
-      const widget = element.querySelector('.element-value').dataset.type;
-
-      console.log(value);
-
-      dropzoneValues.push({
-        [label]: widget !== "checkbox" ? value : element.querySelector('.element-value').checked
-      });
-    });
-  }
-
-  // get form data from the schemas
-  const schemaValues = getSchemasObject();
-
-  // merge the dropzone values with the schema values
-  const pageObject = Object.assign({}, schemaValues, ...dropzoneValues);
-
-  console.log(JSON.stringify(pageObject, null, 2));
-
-  // send the page object to the main process
-  window.electronAPI.writeObjectToFile(pageObject);
-});
