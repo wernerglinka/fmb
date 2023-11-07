@@ -118,32 +118,6 @@ function createFormElementFromSchema(value, parent) {
   return div;
 }
 
-const widgetSelections = [ 
-  "text", 
-  "textarea", 
-  "object", 
-  "array"
-]
-
-/**
- * @function renderFrontmatterSelectForm
- * @description This function will render a select widget for the frontmatter
- * @returns the frontmatter select form
- */
-function renderFrontmatterSelectWidget() {
-  const widget = `
-    <button id="select-component" class="form-button">Select a component</button>
-    <ul class="select-component-menu">
-    ${widgetSelections.map(option => `<li>${option}</li>`).join('')}
-    </ul>
-    `
-  const widgetWrapper = document.createElement('div');
-  widgetWrapper.classList.add('frontmatter-select');
-  widgetWrapper.innerHTML = widget;
-
-  return widgetWrapper;
-}
-
 /**
  * @function renderMainForm
  * @param {array} schemas - an array of schemas
@@ -151,17 +125,9 @@ function renderFrontmatterSelectWidget() {
  * @description This function will build the main form and renders it to the DOM
  * @returns void
  */
-function renderMainForm(schemas, formId) {
-  const frontmatterContainer = document.getElementById('frontmatter-container');
-
-  // add a widget for the frontmatter selection
-  const frontmatterSelectWidget = renderFrontmatterSelectWidget();
-  frontmatterContainer.appendChild(frontmatterSelectWidget);
-
-  // create a form
-  const form = document.createElement('form');
-  form.setAttribute('id', formId);
-
+function renderMainForm(schemas) {
+  const form = document.getElementById('main-form');
+  
   // check if there are any schemas and render them first
   // used for page specific frontmatter components
   if(schemas.length > 0) {
@@ -173,17 +139,6 @@ function renderMainForm(schemas, formId) {
       renderSchema(schema, form);
     });
   }
-
-  // add submit button
-  const submit = document.createElement('button');
-  submit.setAttribute('type', 'submit');
-  submit.id = 'submit-primary';
-  submit.classList.add('form-button');
-  submit.innerHTML = 'Submit';
-  form.appendChild(submit);
-
-  // add the form to the frontmatter container
-  frontmatterContainer.appendChild(form);
 };
 
 /**
@@ -254,32 +209,130 @@ function writeObjectToFile() {
   window.electronAPI.writeObjectToFile(pageObject);
 };
 
-// get the project schemas directory from the main process
-const dialogConfig = {
-  message: 'Select the Schemas Directory',
-  buttonLabel: 'Select',
-  properties: ['openDirectory']
-};
-const schemasDirectory = await window.electronAPI.openDialog('showOpenDialog', dialogConfig);
 
-// get the schemas in the directory from the main process
-let schemas = [];
-if(schemasDirectory.filePaths[0] !== undefined) {
-  schemas = await window.electronAPI.getSchemas(schemasDirectory.filePaths[0]);
+/******************************************************************************
+ * Main render process
+ ******************************************************************************/
+
+// Manage left panel visibility
+// The left panel holds all available components which may be dragged into the 
+// frontmatter pane. The left panel is hidden by default and can be toggled by
+// clicking the left panel icon in the top left corner of the app.
+const container = document.getElementById('working-pane');
+
+const leftPanelIcons = document.querySelectorAll('.left-panel');
+leftPanelIcons.forEach(icon => {
+  icon.addEventListener('click', () => {
+    // toggle the open class on the icons
+    leftPanelIcons.forEach(i => i.classList.toggle('open'));
+    // toggle the left-panel-open class on the container
+    container.classList.toggle('left-panel-open');
+  });
+});
+
+// Define the available components
+const availableComponents = [
+  "text",
+  "textarea",
+  "checkbox",
+  "object",
+  "array"
+];
+
+// Add a visual placeholder for each component into the left panel
+const leftPanel = document.getElementById('component-selections');
+availableComponents.forEach((component, index) => {
+  const div = document.createElement('div');
+  div.classList.add('component-selection', 'draggable');
+  div.id = `component-${index}`;
+  div.setAttribute('draggable', true);
+  div.setAttribute('data-component', component);
+  div.addEventListener('dragstart', dragStart);
+  div.innerHTML = component;
+  leftPanel.appendChild(div);
+});
+
+// Add drag and drop functionality to the form
+function dragStart(event) {
+    event.dataTransfer.setData("text/plain", event.target.dataset.component);
 }
 
-// Build the form from the schemas
-const formId = 'main-form';
-renderMainForm(schemas, formId);
+function dragOver(event) {
+    event.preventDefault();
+}
+
+function drop(event) {
+    event.preventDefault();
+    const data = event.dataTransfer.getData("text/plain");
+    
+    // Create a new element in the receiving container with the dropped data
+    const newItem = document.createElement("div");
+    newItem.textContent = data;
+    newItem.classList.add('data-component', "draggable");
+    newItem.draggable = true;
+  
+    // Append the new item to the receiving container
+    event.target.appendChild(newItem);
+
+    
+}
+
+// at this point the left panel is ready to be used. On to select the schemas directory
+
+
+// Get the project schemas directory from the main process and then the schemas in the directory
+// from the main process. Then build the form from the schemas.
+// This part of the process is wrapped in an async function so we can use await
+(async function mainRenderer() {
+  // Get the project schemas directory from the main process
+  const dialogConfig = {
+    message: 'Select the Schemas Directory',
+    buttonLabel: 'Select',
+    properties: ['openDirectory']
+  };
+
+  const schemasDirectory = await window.electronAPI.openDialog('showOpenDialog', dialogConfig);
+  
+  // Get the schemas in the directory from the main process
+  let schemas = [];
+  if(schemasDirectory.filePaths[0] !== undefined) {
+    schemas = await window.electronAPI.getSchemas(schemasDirectory.filePaths[0]);
+  }
+
+  // Build the form from the schemas
+  renderMainForm(schemas);
+
+  // Add the dropzone to the form
+  const dropzone = document.createElement('div');
+  dropzone.id = 'frontmatter';
+  dropzone.classList.add('dropzone');
+  dropzone.addEventListener("dragover", dragOver);
+  dropzone.addEventListener("drop", drop);
+  mainForm.appendChild(dropzone);
+  
+
+})();
+
+
+
+
+
+
+
 
 // Listen for form submittion
-const mainForm = document.getElementById(formId);
+const mainForm = document.getElementById('main-form');
 mainForm.addEventListener('submit', (e) => {
   e.preventDefault();
 
   // get form data, convert to object and write to file
   writeObjectToFile();
 });
+
+
+
+
+
 
 // Listen for frontmatter component selection
 window.electronAPI.receiveFromOtherRenderer((event, objectReceived) => {

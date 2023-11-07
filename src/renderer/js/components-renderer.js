@@ -334,7 +334,10 @@ addComponentButton.addEventListener('click', async (event) => {
 
 //receive a message from the main renderer
 window.electronAPI.receiveMessage('to-componentsWindow', (message) => {
+  
   if (message === 'windowClosed') {
+    // the window was hidden, so we reset the form so next time the window is
+    // shown, the form is empty
     // remove all form elements
     form.innerHTML = '';
     // reset the button
