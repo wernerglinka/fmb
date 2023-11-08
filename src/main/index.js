@@ -265,16 +265,6 @@ const menu = [
         },
       ]
     : []),
-  {
-    label: 'Add Components',
-    submenu: [
-      { label: 'Text', click: () => showComponentsWindow('text'), accelerator: "CmdOrCtrl+T"},
-      { label: 'Text Area', click: () => showComponentsWindow('textarea'), accelerator: "CmdOrCtrl+Alt+T"},
-      { label: 'Checkbox', click: () => showComponentsWindow('checkbox'), accelerator: "CmdOrCtrl+C"},
-      { label: 'Object', click: () => showComponentsWindow('object'), accelerator: "CmdOrCtrl+O"},
-      { label: 'Array', click: () => showComponentsWindow('array'), accelerator: "CmdOrCtrl+A"},
-    ],
-  }
 ];
 
 // Quit when all windows are closed.

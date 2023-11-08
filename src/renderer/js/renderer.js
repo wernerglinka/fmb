@@ -174,12 +174,12 @@ function renderMainForm(schemas) {
 };
 
 /**
-   * @function convertFormdataToObject
-   * @param {object} flatValues - the object to create the object with
-   * @description This function will create an object with the flatValues.
-   * It will loop through the flatValues and create all properties of an object
-   * @returns {object}
-   */
+ * @function convertFormdataToObject
+ * @param {object} flatValues - the object to create the object with
+ * @description This function will create an object with the flatValues.
+ * It will loop through the flatValues and create all properties of an object
+ * @returns {object}
+ */
 function convertFormdataToObject(flatValues) {
   const pageObject = {};
 
@@ -421,6 +421,7 @@ function createComponent(type) {
   deleteButton.innerHTML = "-";
   deleteButton.addEventListener('click', (e) => {
     e.target.parentElement.remove();
+    updateButtonsStatus();
   });
   div.appendChild(deleteButton);
 
@@ -446,12 +447,13 @@ function drop(event) {
   event.preventDefault();
   const component = event.dataTransfer.getData("text/plain");
   
+  /*
   // Create a new element in the receiving container with the dropped data
   const newItem = document.createElement("div");
   newItem.textContent = component;
   newItem.classList.add('data-component', "draggable");
   newItem.draggable = true;
-
+  */
   // create new element with requested component type
   const newElement = createComponent(component);
   
@@ -463,8 +465,11 @@ function drop(event) {
     const thisElement = e.target;
 
     // check if the input is valid
+    // if not valid, show error message and disable the button
     if( !isValidLabel(thisElement.value) ) {
       showErrorMessage(thisElement, "Label must only use characters and numbers");
+      updateButtonsStatus();
+
       return;
     }
 
@@ -472,31 +477,140 @@ function drop(event) {
     if (thisElement.classList.contains('invalid')) {
       removeErrorMessage(thisElement);
     }
-    
-    const allLabelInputs = document.querySelectorAll('.element-label');
-    let isEnabled = true;
-    
-    // check if any input is empty
-    allLabelInputs.forEach(input => {
-      // check if the input is valid
-      if( !isValidLabel(input.value.trim()) ) {
-        isEnabled = false;
-      }
-    });
 
-    /*
-    // enable the button if all inputs have valid text
-    if( isEnabled ) {
-      addComponentButton.disabled = false;
-    } else {
-      addComponentButton.disabled = true;
-    }
-    */
+    updateButtonsStatus();
   });
 
   // Append the new item to the receiving container
   event.target.appendChild(newElement);
+
+  updateButtonsStatus();
 }
+
+/**
+ * @function updateButtonsStatus
+ * @description This function will update the status of the buttons
+ * @returns void
+ */
+function updateButtonsStatus() {
+  // update SUBMIT button status
+  // SUBMIT button is disabled by default. It will be enabled when schema fields
+  // exist, the user has added valid text to a label input in the dropzone and all 
+  // other label inputs have valid text.
+  const submitButton = document.getElementById('submit-primary');
+  
+  // check if any schemas are present
+  let hasSchemaFields = false;
+  const schemaWrapper = document.getElementById('existing-schemas');
+  const schemaFields = schemaWrapper ? schemaWrapper.querySelectorAll('.form-element') : [];
+  if( schemaFields.length > 0 ) {
+    hasSchemaFields = true;
+  }
+
+  // loop over all label inputs in the dropzone and check if they have valid text.
+  // If all have valid text, enable the SUBMIT button
+  const allLabelInputs = document.querySelectorAll('.element-label');
+  let hasValidLabelInputs = true;
+  let hasNoLabelInputs = true;
+
+  if (allLabelInputs.length > 0) {
+    hasLabelInputs = true;
+    // check if any input is empty
+    allLabelInputs.forEach(input => {
+      // check if the input is valid
+      if( !isValidLabel(input.value.trim()) ) {
+        console.log("Label Invalid");
+        hasValidLabelInputs = false;
+      }
+    });
+  } else {
+    hasLabelInputs = false;
+  }
+  /*
+  console.log(`hasSchemaFields: ${hasSchemaFields}`);
+  console.log(`hasValidLabelInputs: ${hasValidLabelInputs}`);
+  console.log(`hasNoLabelInputs: ${hasNoLabelInputs}`);
+  */
+ 
+  // enable the SUBMIT button if all inputs have valid text
+  if( (hasSchemaFields && hasValidLabelInputs) || 
+      (!hasSchemaFields && hasValidLabelInputs) || 
+      (hasSchemaFields && !hasLabelInputs)) {
+    submitButton.disabled = false;
+  } else {
+    submitButton.disabled = true;
+  }
+  
+
+  // update CLEAR DROPZONE button status
+  // CLEAR DROPZONE button is disabled by default. It will be enabled when the user
+  // has added elements to the dropzone and disabled when the dropzone is empty.
+  const clearDropzoneButton = document.getElementById('clear-dropzone');
+  const dropzone = document.getElementById('dropzone');
+  const dropzoneElements = dropzone.querySelectorAll('.compose');
+  if( dropzoneElements.length > 0 ) {
+    clearDropzoneButton.disabled = false;
+  } else {
+    clearDropzoneButton.disabled = true;
+  }
+
+  // update CLEAR ALL button status
+  // CLEAR ALL button is disabled by default. It will be enabled when the user
+  // has added elements to the dropzone or schemas exist and disabled when the
+  // dropzone and schemas are empty.
+  const clearAllButton = document.getElementById('clear-all');
+  const dropzoneIsEmpty = dropzoneElements.length === 0;
+  const schemasIsEmpty = schemaFields.length === 0;
+  if( dropzoneIsEmpty && schemasIsEmpty ) {
+    clearAllButton.disabled = true;
+  } else {
+    clearAllButton.disabled = false;
+  }
+}
+
+/**
+ * @function addComponentsSidepanel
+ * @description This function will add the components sidepanel to the DOM
+ * The left panel holds all available components which may be dragged into the 
+ * frontmatter pane. The left panel is hidden by default and can be toggled by
+ * clicking the left panel icon to the right of the window title.
+ */
+function renderComponentsSidepanel() {
+  const container = document.getElementById('working-pane');
+  const leftPanelIcons = document.querySelectorAll('.left-panel');
+
+  const availableComponents = [
+    "text",
+    "textarea",
+    "checkbox",
+    "object",
+    "array"
+  ];
+
+  // Add event listeners to the left panel icons so they toggle their
+  // open class and the left-panel-open class on the container
+  leftPanelIcons.forEach(icon => {
+    icon.addEventListener('click', () => {
+      // toggle the open class on the icons
+      leftPanelIcons.forEach(i => i.classList.toggle('open'));
+      // toggle the left-panel-open class on the container
+      container.classList.toggle('left-panel-open');
+    });
+  });
+
+  // Add a visual placeholder for each component into the left panel
+  const leftPanel = document.getElementById('component-selections');
+  availableComponents.forEach((component, index) => {
+    const div = document.createElement('div');
+    div.classList.add('component-selection', 'draggable');
+    div.id = `component-${index}`;
+    div.setAttribute('draggable', true);
+    div.setAttribute('data-component', component);
+    div.addEventListener('dragstart', dragStart);
+    div.innerHTML = component;
+    leftPanel.appendChild(div);
+  });
+};
 
 /**
  * @function waitForHowToProceed
@@ -580,53 +694,16 @@ async function renderWelcomeWindow() {
 // from the main process. Then build the form from the schemas.
 // This part of the process is wrapped in an async function so we can use await
 async function renderMainWindow(howToProceed) {
+  const mainForm = document.getElementById('main-form');
+  
   // remove the welcome window
   const welcomeWindow = document.querySelector('.welcome-window');
   welcomeWindow.remove();
   document.body.classList.remove('welcome');
   
-  
-  // Manage left panel visibility
-  // The left panel holds all available components which may be dragged into the 
-  // frontmatter pane. The left panel is hidden by default and can be toggled by
-  // clicking the left panel icon in the top left corner of the app.
-  const container = document.getElementById('working-pane');
-  const mainForm = document.getElementById('main-form');
-  const leftPanelIcons = document.querySelectorAll('.left-panel');
+  // Add the sidepanel with all available components
+  renderComponentsSidepanel();
 
-  leftPanelIcons.forEach(icon => {
-    icon.addEventListener('click', () => {
-      // toggle the open class on the icons
-      leftPanelIcons.forEach(i => i.classList.toggle('open'));
-      // toggle the left-panel-open class on the container
-      container.classList.toggle('left-panel-open');
-    });
-  });
-
-  // Define the available components
-  const availableComponents = [
-    "text",
-    "textarea",
-    "checkbox",
-    "object",
-    "array"
-  ];
-
-  // Add a visual placeholder for each component into the left panel
-  const leftPanel = document.getElementById('component-selections');
-  availableComponents.forEach((component, index) => {
-    const div = document.createElement('div');
-    div.classList.add('component-selection', 'draggable');
-    div.id = `component-${index}`;
-    div.setAttribute('draggable', true);
-    div.setAttribute('data-component', component);
-    div.addEventListener('dragstart', dragStart);
-    div.innerHTML = component;
-    leftPanel.appendChild(div);
-  });
-
-  // >>>> at this point the left panel is ready to be used. 
-  
   /**
    * If getSchema was selected in the welcome window, we'll have to get the schemas
    * from the main process and start building the form from the schemas
@@ -680,10 +757,12 @@ async function renderMainWindow(howToProceed) {
   const clearDropzoneButton = document.createElement('button');
   clearDropzoneButton.classList.add('form-button');
   clearDropzoneButton.id ='clear-dropzone';
+  clearDropzoneButton.disabled = true;
   clearDropzoneButton.innerHTML = "Clear Dropzone";
   clearDropzoneButton.addEventListener('click', (e) => {
     e.preventDefault();
     dropzone.innerHTML = "";
+    updateButtonsStatus();
   });
   buttonWrapper.appendChild(clearDropzoneButton);
 
@@ -698,8 +777,12 @@ async function renderMainWindow(howToProceed) {
     dropzone.innerHTML = "";
     schemaContainer.innerHTML = "";
     mainForm.reset();
+    updateButtonsStatus();
   });
+  
   buttonWrapper.appendChild(clearAllButton);
+
+  updateButtonsStatus();
 
 
   /**
