@@ -477,7 +477,10 @@ function dragOver(event) {
  */
 function drop(event) {
   event.preventDefault();
+  event.stopPropagation();
   const component = event.dataTransfer.getData("text/plain");
+
+  console.log(component);
 
   // create new element with requested component type
   const newElement = createComponent(component);
@@ -545,7 +548,6 @@ function updateButtonsStatus() {
     allLabelInputs.forEach(input => {
       // check if the input is valid
       if( !isValidLabel(input.value.trim()) ) {
-        console.log("Label Invalid");
         hasValidLabelInputs = false;
       }
     });
