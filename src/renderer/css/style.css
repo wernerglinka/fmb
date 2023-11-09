@@ -315,7 +315,7 @@ fieldset {
     }
   }
 
-  &.compose {
+  &.compose, &.compose-object {
     position: relative;
     display: flex;
     justify-content: flex-start;

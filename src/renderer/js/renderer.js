@@ -222,7 +222,8 @@ function convertFormdataToObject(flatValues) {
  * @returns the schema object
  */
 function getSchemasObject() {
-  const hasSchemas = document.getElementById('existing-schemas').querySelectorAll('.form-element').length > 0;
+  const schemas = document.getElementById('existing-schemas');
+  const hasSchemas = schemas ? schemas.querySelectorAll('.form-element').length > 0 : false;
   if( !hasSchemas ) {
     return {};
   }
@@ -238,6 +239,8 @@ function getSchemasObject() {
     formDataObj[key] = value;
   });
 
+  console.log(`formDataObj: ${JSON.stringify(formDataObj)}`);
+
   // Create the schema object. This step will create a deep object, e.g. 
   // "seo.title": "My Title" will be converted to { seo: { title: "My Title" } }
   return convertFormdataToObject(formDataObj);
@@ -252,7 +255,8 @@ function getSchemasObject() {
 function createComponent(type) {
   // create a div to hold the form element
   const div = document.createElement('div');
-  div.classList.add('compose', 'form-element');
+  const elementModifier = type === "object" ? "compose-object" : "compose";
+  div.classList.add('form-element', elementModifier);
   
   if( type === 'text' ) {
     /**
@@ -480,8 +484,6 @@ function drop(event) {
   event.stopPropagation();
   const component = event.dataTransfer.getData("text/plain");
 
-  console.log(component);
-
   // create new element with requested component type
   const newElement = createComponent(component);
   
@@ -632,6 +634,34 @@ function renderComponentsSidepanel() {
     div.innerHTML = component;
     leftPanel.appendChild(div);
   });
+};
+
+/**
+ * @function getflatPath
+ * @param {*} element 
+ * @param {*} selector 
+ * @returns a string, the flat path to the element
+ */
+function getflatPath(element, selector) {
+  const matchingParentsNames = [];
+  let currentElement = element;
+
+  while (currentElement) {
+    const parent = currentElement.closest(selector);
+    if (parent) {
+      // Get the name of the parent object. Since it is input by the user
+      // we'll have to get it from the input field
+      const name = parent.querySelector('.object-name input').value;
+      matchingParentsNames.push(name);
+      // Update the current element to be the parentNode of the parent of the current element
+      // this way we'll avoid that the current element selects itself as closest() will
+      // return itself if it matches the selector
+      currentElement = parent.parentNode;
+    } else {
+      break;
+    }
+  }
+  return matchingParentsNames.reverse().join('.');
 };
 
 /**
@@ -816,32 +846,45 @@ async function renderMainWindow(howToProceed) {
   mainForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    // preprocess form data in the dropzone
-    // form elements in the dropzone are composed from two input fields
+    // Preprocess form data in the dropzone
+    // Form elements in the dropzone are composed from two input fields
     // one for the label and one for the value. We'll get the values
     // from the input fields and create an object from them
     const dropzone = document.getElementById('dropzone');
+
+    // Elements are selected regardless of where in the hierarchy they are
+    // located in the dropzone. We'll have to get the path to the current
+    // element, e.g. "first.second.third" to be added to the element label.
+    // This is needed to construct the proper deep object structure for all
+    // elements in the dropzone
     const dropzoneElements = dropzone.querySelectorAll('.compose');
-    const dropzoneValues = [];
+    let dropzoneObject = {};
 
     if( dropzoneElements.length > 0 ) {
       dropzoneElements.forEach(element => {
-        const label = element.querySelector('.element-label').value;
+        let label = element.querySelector('.element-label').value;
         const value = element.querySelector('.element-value').value;
         const widget = element.querySelector('.element-value').dataset.type;
+        
+        // get the path to the current element
+        const flatPath = getflatPath(element, '.object-wrapper')
+        label = flatPath !== "" ? `${flatPath}.${label}` : label;
 
-        dropzoneValues.push({
-          [label]: widget !== "checkbox" ? value : element.querySelector('.element-value').checked
-        });
+        // add the new property to the dropzone object
+        dropzoneObject[label] = widget !== "checkbox" ? value : element.querySelector('.element-value').checked;
       });
     }
+
+    // Create the dropzone values object. This step will create a deep object, e.g. 
+    // "seo.title": "My Title" will be converted to { seo: { title: "My Title" } }
+    dropzoneValues = convertFormdataToObject(dropzoneObject);
 
     /**
      * Merge the schemas and dropzone values and write the resulting object to a file
      */
     const schemaValues = getSchemasObject();
     // merge the dropzone values with the schema values
-    const pageObject = Object.assign({}, schemaValues, ...dropzoneValues);
+    const pageObject = Object.assign({}, schemaValues, dropzoneValues);
 
     // send the page object to the main process
     window.electronAPI.writeObjectToFile(pageObject);
