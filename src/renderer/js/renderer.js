@@ -415,6 +415,38 @@ function createComponent(type) {
     div.appendChild(labelText);
   }
 
+  if( type === 'object' ) {
+    /**
+     * Create a fieldset for the object
+     */
+    // create a div, representing the fieldset, to hold the object
+    const objectWrapper = document.createElement('div');
+    objectWrapper.classList.add('object-wrapper');
+
+    // create the object name input
+    const label = document.createElement('label');
+    label.classList.add('object-name');
+    label.innerHTML = `<span>Required Object name</span>`;
+    const nameInput = document.createElement('input');
+    nameInput.setAttribute('type', "text");
+    nameInput.placeholder = "Object Name Placeholder";
+
+    label.appendChild(nameInput);
+
+    objectWrapper.appendChild(label);
+
+    // create a dropzone for the object properties
+    const objectDropzone = document.createElement('div');
+    objectDropzone.classList.add('object-dropzone');
+    objectDropzone.addEventListener("dragover", dragOver);
+    objectDropzone.addEventListener("drop", drop);
+    
+    objectWrapper.appendChild(objectDropzone);
+
+    div.appendChild(objectWrapper);
+  }
+    
+
   //add the delete button
   const deleteButton = document.createElement('div');
   deleteButton.classList.add('delete-button');
@@ -446,40 +478,34 @@ function dragOver(event) {
 function drop(event) {
   event.preventDefault();
   const component = event.dataTransfer.getData("text/plain");
-  
-  /*
-  // Create a new element in the receiving container with the dropped data
-  const newItem = document.createElement("div");
-  newItem.textContent = component;
-  newItem.classList.add('data-component', "draggable");
-  newItem.draggable = true;
-  */
+
   // create new element with requested component type
   const newElement = createComponent(component);
   
-  // add an eventlistener to the label input to enable the button
-  // when the user has added text to the label input and all other
-  // label inputs have text
-  const newElementLabelInput = newElement.querySelector('.element-label');
-  newElementLabelInput.addEventListener('change', (e) => {
-    const thisElement = e.target;
+  if (component === 'text' || component === 'textarea' || component === 'checkbox') {
+    // add an eventlistener to the label input to enable the button
+    // when the user has added text to the label input and all other
+    // label inputs have text
+    const newElementLabelInput = newElement.querySelector('.element-label');
+    newElementLabelInput.addEventListener('change', (e) => {
+      const thisElement = e.target;
 
-    // check if the input is valid
-    // if not valid, show error message and disable the button
-    if( !isValidLabel(thisElement.value) ) {
-      showErrorMessage(thisElement, "Label must only use characters and numbers");
+      // check if the input is valid
+      // if not valid, show error message and disable the button
+      if( !isValidLabel(thisElement.value) ) {
+        showErrorMessage(thisElement, "Label must only use characters and numbers");
+        updateButtonsStatus();
+        return;
+      }
+
+      // remove error message if it exists
+      if (thisElement.classList.contains('invalid')) {
+        removeErrorMessage(thisElement);
+      }
+
       updateButtonsStatus();
-
-      return;
-    }
-
-    // remove error message if it exists
-    if (thisElement.classList.contains('invalid')) {
-      removeErrorMessage(thisElement);
-    }
-
-    updateButtonsStatus();
-  });
+    });
+  }
 
   // Append the new item to the receiving container
   event.target.appendChild(newElement);
@@ -511,7 +537,7 @@ function updateButtonsStatus() {
   // If all have valid text, enable the SUBMIT button
   const allLabelInputs = document.querySelectorAll('.element-label');
   let hasValidLabelInputs = true;
-  let hasNoLabelInputs = true;
+  let hasLabelInputs = true;
 
   if (allLabelInputs.length > 0) {
     hasLabelInputs = true;
@@ -526,12 +552,7 @@ function updateButtonsStatus() {
   } else {
     hasLabelInputs = false;
   }
-  /*
-  console.log(`hasSchemaFields: ${hasSchemaFields}`);
-  console.log(`hasValidLabelInputs: ${hasValidLabelInputs}`);
-  console.log(`hasNoLabelInputs: ${hasNoLabelInputs}`);
-  */
- 
+
   // enable the SUBMIT button if all inputs have valid text
   if( (hasSchemaFields && hasValidLabelInputs) || 
       (!hasSchemaFields && hasValidLabelInputs) || 
@@ -541,7 +562,6 @@ function updateButtonsStatus() {
     submitButton.disabled = true;
   }
   
-
   // update CLEAR DROPZONE button status
   // CLEAR DROPZONE button is disabled by default. It will be enabled when the user
   // has added elements to the dropzone and disabled when the dropzone is empty.

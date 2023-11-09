@@ -226,46 +226,6 @@ h3 {
   }
 }
 
-/** 
- * form styles 
- 
-.frontmatter-select {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 2;
-  font-family: 'Open Sans', sans-serif;
-
-  &:hover .select-component-menu {
-    padding: 0.5rem 0;
-    opacity: 1;
-    max-height: 10rem;
-    transition: max-height, opacity 0.4s ease 0.3s;
-  }
-}
-
-.select-component-menu {
-  list-style: none;
-  margin: 0.25rem 0 0;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: var(--elements-radius);
-  border: 1px solid var(--border-color);
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-
-  & li {
-    padding: 0.25rem 0.5rem;
-    cursor: pointer;
-    transition: all 0.5s ease-in-out;
-
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.4);
-    }
-  }
-}
-*/
-
 /**
  * Main form styles
  */
@@ -341,8 +301,7 @@ fieldset {
       }
     }
     
-    & [type="text"],
-    & textarea {
+    & [type="text"], & textarea {
       font-family: 'Open Sans', sans-serif;
       border: none;
       border-bottom: 1px solid var(--border-color);
@@ -366,8 +325,34 @@ fieldset {
     padding: 0.5rem;
     margin-bottom: 2rem;
 
+    & .object-wrapper {
+      width: 94%;
 
-    > label {
+      & .object-name {
+        flex: 0 0 94%;
+        display: block;
+        margin-bottom: 1rem;
+
+        & span {
+          display: block;
+          margin-bottom: 1rem;
+        }
+
+        & input {
+          width: calc(100% - 1rem);
+        
+        }
+      }
+
+      & .object-dropzone {
+        min-height: 5rem;
+        border: 1px dotted var(--border-color);
+        border-radius: var(--elements-radius);
+        padding: 0.5rem;
+      }
+    }
+
+    & label {
       flex: 0 0 47%;
       display: block;
 
@@ -388,6 +373,7 @@ fieldset {
       border-radius: 50%;
       color: var(--font-color);
       cursor: pointer;
+      margin-left: auto;
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.2);
