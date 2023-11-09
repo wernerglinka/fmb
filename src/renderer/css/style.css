@@ -315,7 +315,7 @@ fieldset {
     }
   }
 
-  &.compose, &.compose-object {
+  &.compose, &.compose-object, &.compose-array {
     position: relative;
     display: flex;
     justify-content: flex-start;
@@ -325,10 +325,10 @@ fieldset {
     padding: 0.5rem;
     margin-bottom: 2rem;
 
-    & .object-wrapper {
+    & .object-wrapper, & .array-wrapper {
       width: 94%;
 
-      & .object-name {
+      & .object-name, & .array-name {
         flex: 0 0 94%;
         display: block;
         margin-bottom: 1rem;
@@ -344,7 +344,7 @@ fieldset {
         }
       }
 
-      & .object-dropzone {
+      & .object-dropzone, & .array-dropzone {
         min-height: 5rem;
         border: 1px dotted var(--border-color);
         border-radius: var(--elements-radius);

@@ -255,7 +255,7 @@ function getSchemasObject() {
 function createComponent(type) {
   // create a div to hold the form element
   const div = document.createElement('div');
-  const elementModifier = type === "object" ? "compose-object" : "compose";
+  const elementModifier = type === "object" ? "compose-object" : type === "array" ? "compose-array" : "compose";
   div.classList.add('form-element', elementModifier);
   
   if( type === 'text' ) {
@@ -448,6 +448,37 @@ function createComponent(type) {
     objectWrapper.appendChild(objectDropzone);
 
     div.appendChild(objectWrapper);
+  }
+
+  if( type === 'array' ) {
+    /**
+     * Create a fieldset for the array
+     */
+    // create a div, representing the fieldset, to hold the array
+    const arrayWrapper = document.createElement('div');
+    arrayWrapper.classList.add('array-wrapper');
+
+    // create the array name input
+    const label = document.createElement('label');
+    label.classList.add('array-name');
+    label.innerHTML = `<span>Required Array name</span>`;
+    const nameInput = document.createElement('input');
+    nameInput.setAttribute('type', "text");
+    nameInput.placeholder = "Array Name Placeholder";
+
+    label.appendChild(nameInput);
+
+    arrayWrapper.appendChild(label);
+
+    // create a dropzone for the array members
+    const arrayDropzone = document.createElement('div');
+    arrayDropzone.classList.add('array-dropzone');
+    arrayDropzone.addEventListener("dragover", dragOver);
+    arrayDropzone.addEventListener("drop", drop);
+    
+    arrayWrapper.appendChild(arrayDropzone);
+
+    div.appendChild(arrayWrapper);
   }
     
 
