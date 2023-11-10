@@ -425,7 +425,7 @@ function createComponent(type) {
      */
     // create a div, representing the fieldset, to hold the object
     const objectWrapper = document.createElement('div');
-    objectWrapper.classList.add('object-wrapper');
+    objectWrapper.classList.add('object-wrapper', 'is-object');
 
     // create the object name input
     const label = document.createElement('label');
@@ -438,10 +438,12 @@ function createComponent(type) {
     label.appendChild(nameInput);
 
     objectWrapper.appendChild(label);
+    
 
     // create a dropzone for the object properties
     const objectDropzone = document.createElement('div');
     objectDropzone.classList.add('object-dropzone');
+    objectDropzone.dataset.wrapper = "is-object";
     objectDropzone.addEventListener("dragover", dragOver);
     objectDropzone.addEventListener("drop", drop);
     
@@ -456,7 +458,7 @@ function createComponent(type) {
      */
     // create a div, representing the fieldset, to hold the array
     const arrayWrapper = document.createElement('div');
-    arrayWrapper.classList.add('array-wrapper');
+    arrayWrapper.classList.add('array-wrapper', 'is-array');
 
     // create the array name input
     const label = document.createElement('label');
@@ -473,6 +475,7 @@ function createComponent(type) {
     // create a dropzone for the array members
     const arrayDropzone = document.createElement('div');
     arrayDropzone.classList.add('array-dropzone');
+    arrayDropzone.dataset.wrapper = "is-array";
     arrayDropzone.addEventListener("dragover", dragOver);
     arrayDropzone.addEventListener("drop", drop);
     
@@ -515,8 +518,11 @@ function drop(event) {
   event.stopPropagation();
   const component = event.dataTransfer.getData("text/plain");
 
+  // get the receiving container type
+  const containerType = event.target.dataset.wrapper;
+   
   // create new element with requested component type
-  const newElement = createComponent(component);
+  const newElement = createComponent(component, containerType);
   
   if (component === 'text' || component === 'textarea' || component === 'checkbox') {
     // add an eventlistener to the label input to enable the button
