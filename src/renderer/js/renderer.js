@@ -239,7 +239,7 @@ function getSchemasObject() {
     formDataObj[key] = value;
   });
 
-  console.log(`formDataObj: ${JSON.stringify(formDataObj)}`);
+  //console.log(`formDataObj: ${JSON.stringify(formDataObj)}`);
 
   // Create the schema object. This step will create a deep object, e.g. 
   // "seo.title": "My Title" will be converted to { seo: { title: "My Title" } }
@@ -255,24 +255,20 @@ function getSchemasObject() {
 function createComponent(type) {
   // create a div to hold the form element
   const div = document.createElement('div');
-  const elementModifier = type === "object" ? "compose-object" : type === "array" ? "compose-array" : "compose";
-  div.classList.add('form-element', elementModifier);
+
+  let elementModifier = null;
+  if( type === "object" ) { elementModifier = "is-object"; }
+  if( type === "array" ) { elementModifier = "is-array"; }
+  if( type === "simple list" ) { elementModifier = "is-list"; }
+
+  div.classList.add('form-element');
+  elementModifier && div.classList.add(elementModifier);
+
   
   if( type === 'text' ) {
-    /**
-     * Create the text input object
-     * {
-     *   "label": "",
-     *   "type": "variable",
-     *   "widget": "text",
-     *   "value": "",
-     *   "placeholder": ""
-     * } 
-     */ 
-
     // create the label for label input
     const label = document.createElement('label');
-    label.innerHTML = `<span>Required label for Text element</span>`;
+    label.innerHTML = `<span>Text Label<sup>*</sup></span>`;
 
     // create the label input
     const labelInput = document.createElement('input');
@@ -292,7 +288,7 @@ function createComponent(type) {
     
     // create the label for text input
     const labelText = document.createElement('label');
-    labelText.innerHTML = `<span>Optional Text for Text element</span>`;
+    labelText.innerHTML = `<span>Text for Text element</span>`;
 
     // create the input
     const textInput = document.createElement('input');
@@ -313,20 +309,9 @@ function createComponent(type) {
   }
 
   if( type === 'textarea' ) {
-    /**
-     * Create the text input object
-     * {
-     *   "label": "",
-     *   "type": "variable",
-     *   "widget": "textarea",
-     *   "value": "",
-     *   "placeholder": ""
-     * } 
-     */ 
-
     // create the label for label input
     const label = document.createElement('label');
-    label.innerHTML = `<span>Required label for Textarea element</span>`;
+    label.innerHTML = `<span>Textarea Label<sup>*</sup></span>`;
 
     // create the label input
     const labelInput = document.createElement('input');
@@ -346,7 +331,7 @@ function createComponent(type) {
     
     // create the label for textarea
     const labelText = document.createElement('label');
-    labelText.innerHTML = `<span>Optional Text for Textarea element</span>`;
+    labelText.innerHTML = `<span>Text for Textarea element</span>`;
 
     // create the textarea
     const textareaInput = document.createElement('textarea');
@@ -366,19 +351,9 @@ function createComponent(type) {
   }
 
   if( type === 'checkbox' ) {
-    /**
-     * Create the checkbox input object
-     * {
-     *   "label": "",
-     *   "type": "variable",
-     *   "widget": "checkbox",
-     *   "value": "false",
-     * } 
-     */ 
-
     // create the label for label input
     const label = document.createElement('label');
-    label.innerHTML = `<span>Required label for Checkbox element</span>`;
+    label.innerHTML = `<span>Checkbox Label<sup>*</sup></span>`;
 
     // create the label input
     const labelInput = document.createElement('input');
@@ -398,7 +373,7 @@ function createComponent(type) {
     
     // create the label for checkbox
     const labelText = document.createElement('label');
-    labelText.innerHTML = `<span>Initial state for element</span>`;
+    labelText.innerHTML = `<span>Initial state of checkbox</span>`;
 
     // create the checkbox
     const checkboxInput = document.createElement('input');
@@ -419,25 +394,85 @@ function createComponent(type) {
     div.appendChild(labelText);
   }
 
+  if( type === 'simple list' ) {
+    /**
+     * Create a fieldset for the array
+     */
+    // create the array name input
+    const label = document.createElement('label');
+    label.classList.add('object-name');
+    label.innerHTML = `<span>List Name<sup>*</sup></span>`;
+    const nameInput = document.createElement('input');
+    nameInput.setAttribute('type', "text");
+    nameInput.placeholder = "Name Placeholder";
+
+    label.appendChild(nameInput);
+    div.appendChild(label);
+
+    // create the first list item input
+    const textInput = document.createElement('input');
+    textInput.setAttribute('type', "text");
+    textInput.dataset.type = "text";
+    textInput.classList.add('list-item');
+    textInput.placeholder = "Item Placeholder";
+
+    // create wrapper for input styling
+    const listWrapper = document.createElement('ul');
+    const listItem = document.createElement('li');
+    listItem.appendChild(textInput);
+
+    // add a button wrapper to the list item
+    const buttonWrapper = document.createElement('div');
+    buttonWrapper.classList.add('button-wrapper');
+    listItem.appendChild(buttonWrapper);
+    
+    //add the list item add button
+    const addListItem = document.createElement('div');
+    addListItem.classList.add('add-button', 'button');
+    addListItem.innerHTML = "+";
+    buttonWrapper.appendChild(addListItem);
+    
+    //add the list item delete button
+    const deleteListItem = document.createElement('div');
+    deleteListItem.classList.add('delete-button', 'button');
+    deleteListItem.innerHTML = "-";
+    buttonWrapper.appendChild(deleteListItem);
+
+    listItem.appendChild(buttonWrapper);
+    listWrapper.appendChild(listItem);
+
+    // add a eventlistener to the listWrapper to handle the add and delete buttons
+
+    listWrapper.addEventListener('click', (e) => {
+      // if the add button was clicked clone the list item and add it to the list
+      if( e.target.classList.contains('add-button') ) {
+        const listItem = e.target.parentElement.parentElement.cloneNode(true);
+        listWrapper.appendChild(listItem);
+      }
+      // if the delete button was clicked remove the list item from the list
+      if( e.target.classList.contains('delete-button') ) {
+        e.target.parentElement.parentElement.remove();
+      }
+    });
+
+    div.appendChild(listWrapper);
+  }
+
   if( type === 'object' ) {
     /**
      * Create a fieldset for the object
      */
-    // create a div, representing the fieldset, to hold the object
-    const objectWrapper = document.createElement('div');
-    objectWrapper.classList.add('object-wrapper', 'is-object');
-
     // create the object name input
     const label = document.createElement('label');
-    label.classList.add('object-name');
-    label.innerHTML = `<span>Required Object name</span>`;
+    label.classList.add('object-name', 'not-required');
+    label.innerHTML = `<span>Object Name<sup>*</sup></span>`;
     const nameInput = document.createElement('input');
     nameInput.setAttribute('type', "text");
-    nameInput.placeholder = "Object Name Placeholder";
+    nameInput.placeholder = "Name Placeholder";
 
     label.appendChild(nameInput);
 
-    objectWrapper.appendChild(label);
+    div.appendChild(label);
     
 
     // create a dropzone for the object properties
@@ -447,30 +482,24 @@ function createComponent(type) {
     objectDropzone.addEventListener("dragover", dragOver);
     objectDropzone.addEventListener("drop", drop);
     
-    objectWrapper.appendChild(objectDropzone);
-
-    div.appendChild(objectWrapper);
+    div.appendChild(objectDropzone);
   }
 
   if( type === 'array' ) {
     /**
      * Create a fieldset for the array
      */
-    // create a div, representing the fieldset, to hold the array
-    const arrayWrapper = document.createElement('div');
-    arrayWrapper.classList.add('array-wrapper', 'is-array');
-
     // create the array name input
     const label = document.createElement('label');
-    label.classList.add('array-name');
-    label.innerHTML = `<span>Required Array name</span>`;
+    label.classList.add('object-name');
+    label.innerHTML = `<span>Array Name<sup>*</sup></span>`;
     const nameInput = document.createElement('input');
     nameInput.setAttribute('type', "text");
-    nameInput.placeholder = "Array Name Placeholder";
+    nameInput.placeholder = "Array Name";
 
     label.appendChild(nameInput);
 
-    arrayWrapper.appendChild(label);
+    div.appendChild(label);
 
     // create a dropzone for the array members
     const arrayDropzone = document.createElement('div');
@@ -479,13 +508,11 @@ function createComponent(type) {
     arrayDropzone.addEventListener("dragover", dragOver);
     arrayDropzone.addEventListener("drop", drop);
     
-    arrayWrapper.appendChild(arrayDropzone);
-
-    div.appendChild(arrayWrapper);
+    div.appendChild(arrayDropzone);
   }
     
 
-  //add the delete button
+  //add the form-element delete button
   const deleteButton = document.createElement('div');
   deleteButton.classList.add('delete-button');
   deleteButton.innerHTML = "-";
@@ -518,36 +545,45 @@ function drop(event) {
   event.stopPropagation();
   const component = event.dataTransfer.getData("text/plain");
 
-  // get the receiving container type
-  const containerType = event.target.dataset.wrapper;
-   
   // create new element with requested component type
-  const newElement = createComponent(component, containerType);
-  
-  if (component === 'text' || component === 'textarea' || component === 'checkbox') {
-    // add an eventlistener to the label input to enable the button
-    // when the user has added text to the label input and all other
-    // label inputs have text
-    const newElementLabelInput = newElement.querySelector('.element-label');
-    newElementLabelInput.addEventListener('change', (e) => {
-      const thisElement = e.target;
+  const newElement = createComponent(component);
 
-      // check if the input is valid
-      // if not valid, show error message and disable the button
-      if( !isValidLabel(thisElement.value) ) {
-        showErrorMessage(thisElement, "Label must only use characters and numbers");
-        updateButtonsStatus();
-        return;
-      }
-
-      // remove error message if it exists
-      if (thisElement.classList.contains('invalid')) {
-        removeErrorMessage(thisElement);
-      }
-
-      updateButtonsStatus();
-    });
+  // If an object is placed in an array dropzone, hide the label input
+  // since the object will not need a name
+  if( component === "object" && event.target.dataset.wrapper === "is-array" ) {
+    const labelInput = newElement.querySelector('.object-name');
+    
+    // check if any objects already exists in the array dropzone
+    // to avoid duplicate names. E.g. we will generate  'neverMind1', 'neverMind2', etc.
+    const objectsInArray = event.target.querySelectorAll('.object-name');
+    const objectIndex = objectsInArray.length;
+    labelInput.querySelector('input').value = `neverMind${objectIndex + 1}`; // something for the loopstack
+    labelInput.style.display = "none";
   }
+
+  // add an eventlistener to the label input to enable the button
+  // when the user has added text to the label input and all other
+  // label inputs have text
+  const newElementLabelInput = newElement.querySelector('.element-label, .object-name input');
+  newElementLabelInput && newElementLabelInput.addEventListener('change', (e) => {
+    const thisElement = e.target;
+
+    // check if the input is valid
+    // if not valid, show error message and disable the button
+    if( !isValidLabel(thisElement.value) ) {
+      showErrorMessage(thisElement, "Label must only use characters and numbers");
+      updateButtonsStatus();
+      return;
+    }
+
+    // remove error message if it exists
+    if (thisElement.classList.contains('invalid')) {
+      removeErrorMessage(thisElement);
+    }
+
+    updateButtonsStatus();
+  });
+
 
   // Append the new item to the receiving container
   event.target.appendChild(newElement);
@@ -577,7 +613,9 @@ function updateButtonsStatus() {
 
   // loop over all label inputs in the dropzone and check if they have valid text.
   // If all have valid text, enable the SUBMIT button
-  const allLabelInputs = document.querySelectorAll('.element-label');
+  // NOTE: Object name inputs are not required to have text. When used in an array
+  //an object may not need a name. This is up to the user.
+  const allLabelInputs = document.querySelectorAll('.element-label, .object-name input:not(.not-required input)');
   let hasValidLabelInputs = true;
   let hasLabelInputs = true;
 
@@ -591,6 +629,7 @@ function updateButtonsStatus() {
       }
     });
   } else {
+    hasValidLabelInputs = false;
     hasLabelInputs = false;
   }
 
@@ -608,7 +647,7 @@ function updateButtonsStatus() {
   // has added elements to the dropzone and disabled when the dropzone is empty.
   const clearDropzoneButton = document.getElementById('clear-dropzone');
   const dropzone = document.getElementById('dropzone');
-  const dropzoneElements = dropzone.querySelectorAll('.compose');
+  const dropzoneElements = dropzone.querySelectorAll('.form-element');
   if( dropzoneElements.length > 0 ) {
     clearDropzoneButton.disabled = false;
   } else {
@@ -644,6 +683,7 @@ function renderComponentsSidepanel() {
     "text",
     "textarea",
     "checkbox",
+    "simple list",
     "object",
     "array"
   ];
@@ -656,11 +696,29 @@ function renderComponentsSidepanel() {
       leftPanelIcons.forEach(i => i.classList.toggle('open'));
       // toggle the left-panel-open class on the container
       container.classList.toggle('left-panel-open');
+
+      if( container.classList.contains('left-panel-open') ) {
+        // Get the floating container position and width and set the float container
+        // position to fixed so it will stay in place when the user scrolls
+        setTimeout(() => {
+          const floatContainer = document.getElementById('float-container');
+          const floatContainerPosition = floatContainer.getBoundingClientRect();
+          const floatContainerWidth = floatContainer.offsetWidth;
+
+          floatContainer.style.position = "fixed";
+          floatContainer.style.width = `${floatContainerWidth}px`;
+          floatContainer.style.top = `${floatContainerPosition.top}px`;
+          floatContainer.style.left = `${floatContainerPosition.left}px`;
+        }, 500);
+      } 
     });
   });
 
   // Add a visual placeholder for each component into the left panel
   const leftPanel = document.getElementById('component-selections');
+  const floatContainer = document.createElement('div');
+  floatContainer.id = 'float-container';
+
   availableComponents.forEach((component, index) => {
     const div = document.createElement('div');
     div.classList.add('component-selection', 'draggable');
@@ -669,36 +727,221 @@ function renderComponentsSidepanel() {
     div.setAttribute('data-component', component);
     div.addEventListener('dragstart', dragStart);
     div.innerHTML = component;
-    leftPanel.appendChild(div);
+    floatContainer.appendChild(div);
   });
+
+  leftPanel.appendChild(floatContainer);
 };
 
 /**
- * @function getflatPath
- * @param {*} element 
- * @param {*} selector 
- * @returns a string, the flat path to the element
+ * @function getCurrentObject
+ * @param {object} formObject 
+ * @param {array} loopStack 
+ * @returns {object} currentObject
+ * @description getCurrentObject navigates through the nested formObject based on 
+ * an array representing the path to traverse within this object and returns the
+ * object at that specific location. 
  */
-function getflatPath(element, selector) {
-  const matchingParentsNames = [];
-  let currentElement = element;
-
-  while (currentElement) {
-    const parent = currentElement.closest(selector);
-    if (parent) {
-      // Get the name of the parent object. Since it is input by the user
-      // we'll have to get it from the input field
-      const name = parent.querySelector('.object-name input').value;
-      matchingParentsNames.push(name);
-      // Update the current element to be the parentNode of the parent of the current element
-      // this way we'll avoid that the current element selects itself as closest() will
-      // return itself if it matches the selector
-      currentElement = parent.parentNode;
-    } else {
-      break;
+function getCurrentObject(formObject, loopStack) {
+  let currentObject = formObject;
+  for (let i = 0; i < loopStack.length - 1; i++) {
+    let key = loopStack[i];
+    if (!currentObject[key]) {
+      currentObject[key] = {};
     }
+    currentObject = currentObject[key];
   }
-  return matchingParentsNames.reverse().join('.');
+  return currentObject;
+}
+
+/**
+ * @function processList
+ * @param {*} listElement 
+ * @returns key/value pair
+ * @description Transforms a list element to a key/value pair, were the key is the
+ *   list name and the value is an array of the list items
+ */
+function processList(listElement) {
+  // get the list name
+  key = listElement.querySelector('.object-name input').value;
+  // get the list
+  const listItems = listElement.querySelectorAll('li');
+    const listItemsArray = [];
+    listItems.forEach((item, index) => {
+      listItemsArray.push(item.querySelector('input').value);
+    });
+  value = listItemsArray;
+
+  return { key, value };
+}
+
+
+/**
+ * @function transformFormElementsToObject
+ * @param {Nodelist} allFormElements 
+ * @returns {object} formObject
+ * @description This function will transform the form elements to an 
+ *   object which will be used to create the frontmatter YAML. The function
+ *   uses a loopStack to keep track of the current object's depth. The loopStack is
+ *   an array of strings. An array item is the name of the current object.
+ *   The previous item in the array is the name of the parent object, etc. The
+ *   first item in the array is the name of the main object. This approach is
+ *   necessary to create the correct deep object structure.   
+ */
+function transformFormElementsToObject(allFormElements) {
+  const numberOfFormElements = allFormElements.length;
+  const loopStack = ["main"];
+  const formObject = {};
+  // Add object to formObject with name from loopStack. This is initially 
+  // the main object, e.g. formObject.main = {}
+  formObject[loopStack[0]] = {};
+  let currentLevelObject;
+
+  for (let i = 0; i < numberOfFormElements; i++) {
+    const currentElement = allFormElements[i];
+
+    // get status of the current element
+    const isObject = currentElement.classList.contains('is-object');
+    const isArray = currentElement.classList.contains('is-array');
+    const isList = currentElement.classList.contains('is-list');
+    const isLast = currentElement.classList.contains('is-last');
+    const isLastInArray = currentElement.classList.contains('array-last');
+
+    // check if the current element is an array or object. If so, add the name to the loopStack
+    // as this represents a level in the object structure
+    if (isObject || isArray) {
+      const name = currentElement.querySelector('.object-name input').value;
+      loopStack.push(name);
+
+      // add an empty object to formObject with name from loopStack
+      currentLevelObject = getCurrentObject(formObject, loopStack);
+      currentLevelObject[loopStack[loopStack.length - 1]] = {};
+    } 
+    
+    // process all simple prop elements
+    else if (!isLast) {
+      let key, value, widget;
+
+      // A list is a simple prop variants
+      if (isList) {
+        const list = processList(currentElement);
+        key = list.key;
+        value = list.value;
+
+      } else {
+        // Get the element props
+        key = currentElement.querySelector('.element-label').value;
+        value = currentElement.querySelector('.element-value').value;
+        widget = currentElement.querySelector('.element-value').type;
+      }
+
+      // Add the element to its parent object
+      currentLevelObject = getCurrentObject(formObject,loopStack);
+      currentLevelObject[loopStack[loopStack.length - 1]][key] = widget !== "checkbox" ? value : currentElement.querySelector('.element-value').checked;
+
+    } else {
+      // if the current element is the last in an array or object, remove the
+      // parent name from the loopStack. This will move the currentLevelObject up one level
+      currentLevelObject = getCurrentObject(formObject,loopStack);
+
+      // remove the last item from the loopStack
+      const parentName = loopStack.pop();
+
+      /************************************************************************
+        Objects when direct array children do not have a name to aid in the 
+        conversion from object to YAML. This example shows the issue:
+        
+        NOTE: that initially we use a dummy name for the object, e.g. neverMind1, neverMind2, etc.
+        so we can create the correct object structure. This dummy name will be removed later.
+      
+      {
+        "layout": "sections",
+        "draft": false,
+        "sections": {
+          "neverMind1": {
+            "container": "article",
+            "inContainer": true,
+            "background": {
+              "color": "#333",
+              "image": ""
+            }
+          },
+          "neverMind2": {
+            "container": "aside",
+            "inContainer": false,
+            "background": {
+              "color": "#333",
+              "image": ""
+            }
+          }
+        }
+      }
+      
+      will be converted to this:
+      NOTE: that the dummy name is removed and the object is converted to an array
+      
+      {
+        "layout": "sections",
+        "draft": false,
+        "sections": [
+          {
+            "container": "article",
+            "inContainer": true,
+            "background": {
+              "color": "#333",
+              "image": ""
+            }
+          },
+          {
+            "container": "aside",
+            "inContainer": false,
+            "background": {
+              "color": "#333",
+              "image": ""
+            }
+          }
+        ]
+      }
+
+      This will finally result in this YAML object:
+
+      layout: sections
+      draft: false
+      sections:
+        - container: article
+          inContainer: true
+          background:
+            color: '#333'
+            image: ''
+        - container: aside
+          inContainer: false
+          background:
+            color: '#333'
+            image: ''
+
+       *************************************************************************/
+
+      // Check if the current element is the last in an array
+      // if so, convert object props to array members
+      if (isLastInArray) {
+        const arrayVersion = [];
+        Object.entries(currentLevelObject[parentName]).forEach(([key, value]) => {
+          // if object, just push the value
+          if (typeof value === 'object') {
+            arrayVersion.push(value);
+          } else {
+            // if not object, create an object with the key and value and push it
+            arrayVersion.push({ [key]: value });
+          }
+        });
+
+        // replace the object with the array
+        currentLevelObject[parentName] = arrayVersion;
+      } 
+    }
+  };
+
+  return formObject.main;
 };
 
 /**
@@ -863,9 +1106,10 @@ async function renderMainWindow(howToProceed) {
   clearAllButton.innerHTML = "Clear ALL";
   clearAllButton.addEventListener('click', (e) => {
     e.preventDefault();
-    dropzone.innerHTML = "";
-    schemaContainer.innerHTML = "";
-    mainForm.reset();
+    if ( dropzone ) {dropzone.innerHTML = ""};
+    if ( schemaContainer ) {schemaContainer.innerHTML = ""};
+    //mainForm.reset();
+
     updateButtonsStatus();
   });
   
@@ -884,49 +1128,54 @@ async function renderMainWindow(howToProceed) {
     e.preventDefault();
 
     // Preprocess form data in the dropzone
-    // Form elements in the dropzone are composed from two input fields
-    // one for the label and one for the value. We'll get the values
-    // from the input fields and create an object from them
     const dropzone = document.getElementById('dropzone');
 
-    // Elements are selected regardless of where in the hierarchy they are
-    // located in the dropzone. We'll have to get the path to the current
-    // element, e.g. "first.second.third" to be added to the element label.
-    // This is needed to construct the proper deep object structure for all
-    // elements in the dropzone
-    const dropzoneElements = dropzone.querySelectorAll('.compose');
-    let dropzoneObject = {};
+    // first we'll add an dummy element with an "is-last" class at the end of any 
+    // dropzone. This will be used to build inner objects and arrays properly.
+    const dummyElement = document.createElement('div');
+    dummyElement.classList.add('form-element', 'is-last');
+    dropzone.appendChild(dummyElement);
+    
+    const secondaryDropzones = dropzone.querySelectorAll('.object-dropzone, .array-dropzone');
+    secondaryDropzones.forEach(dropzone => {
+      // add a dummy is-last element at the end of the dropzone
+      const dummyElement = document.createElement('div');
+      dummyElement.classList.add('form-element', 'is-last');
+      // if array dropzone add "array-last" class
+      if( dropzone.classList.contains('array-dropzone') ) {
+        dummyElement.classList.add('array-last');
+      }
+      dropzone.appendChild(dummyElement);
+    });
 
-    if( dropzoneElements.length > 0 ) {
-      dropzoneElements.forEach(element => {
-        let label = element.querySelector('.element-label').value;
-        const value = element.querySelector('.element-value').value;
-        const widget = element.querySelector('.element-value').dataset.type;
-        
-        // get the path to the current element
-        const flatPath = getflatPath(element, '.object-wrapper')
-        label = flatPath !== "" ? `${flatPath}.${label}` : label;
+    // Get all form-elements in the dropzone
+    const allFormElements = dropzone.querySelectorAll('.form-element');
+    // Transform the form elements to an object
+    const dropzoneValues = transformFormElementsToObject(allFormElements);
 
-        // add the new property to the dropzone object
-        dropzoneObject[label] = widget !== "checkbox" ? value : element.querySelector('.element-value').checked;
-      });
-    }
-
-    // Create the dropzone values object. This step will create a deep object, e.g. 
-    // "seo.title": "My Title" will be converted to { seo: { title: "My Title" } }
-    dropzoneValues = convertFormdataToObject(dropzoneObject);
+    //console.log(JSON.stringify(dropzoneValues, null, 2));
+    
+    // Cleanup
+    // Remove the dummy element so we can edit and use the form again
+    const redundantDummyElements = document.querySelectorAll('.is-last');
+    redundantDummyElements.forEach(element => {
+      element.remove();
+    });
 
     /**
      * Merge the schemas and dropzone values and write the resulting object to a file
-     */
+     */ 
     const schemaValues = getSchemasObject();
     // merge the dropzone values with the schema values
     const pageObject = Object.assign({}, schemaValues, dropzoneValues);
 
+    const pageYAMLObject = window.electronAPI.toYAML(pageObject);
+    console.log(pageYAMLObject);
+
     // send the page object to the main process
     window.electronAPI.writeObjectToFile(pageObject);
-  });
 
+  });
 };
 
 /******************************************************************************

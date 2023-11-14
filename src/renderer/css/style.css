@@ -2,13 +2,16 @@
   --font-color: #fff;
   --border-color: #bbb;
   --error-color: red;
+
   --hover-color: #fdfa72;
+  --highlight-color: #fdfa72;
   --element-padding: 5px;
   --body-padding: 2rem;
   --submit-button-color:
   --submit-button-padding: 0.75rem;
   --elements-radius: 0.5rem;
   --titlebar-height: 2rem;
+  --help-background-color: #5397be;
 }
 
 *:focus {
@@ -41,7 +44,8 @@
 body {
   margin: 0;
   min-height: 100vh;
-  padding: var(--body-padding);
+  min-width: 900px;
+  padding: 0 var(--body-padding);
   background-image: linear-gradient(to bottom, #5397be, #3a4076);
   background-repeat: no-repeat;
   background-size: cover;
@@ -102,6 +106,7 @@ h1 {
   display: inline-block;
   position: relative;
   padding-right: 3rem;
+  margin-top: 3rem;
 }
 h3 {
   text-transform: uppercase;
@@ -252,6 +257,8 @@ h3 {
   min-height: 10rem;
   padding-bottom: 2rem; /* a little room when dropzone is full */
   margin-bottom: 2rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--elements-radius);
 }
 
 /*
@@ -266,18 +273,75 @@ fieldset {
 }
 
 .form-element {
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  border: 1px dotted var(--border-color);
+  border-radius: var(--elements-radius);
+  padding: 0.5rem;
+  margin-bottom: 2rem;
   font-size: 0.8rem;
-  margin-bottom: 0.75rem;
+  padding-right: 3rem;
+
+  &.is-last {
+    border: none;
+    border-top: 1px double var(--highlight-color);
+    padding: 0;
+    overflow: hidden;
+    height: 0;
+  }
 
   & label {
-    display: flex;
-    justify-content: flex-start;
-    
+    flex: 0 0 50%;
 
     & span {
       flex: 0 0 6rem;
       display: inline-block;
       margin-right: 1rem;
+    }
+    & .help {
+      position: relative;
+      display: inline-flex !important;
+      justify-content: center;
+      align-items: center;
+      width: 1.2rem;
+      height: 1.2rem;
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      margin: 0 0 0 0.5rem;
+
+      &:hover {
+        cursor: help;
+
+        & .help-text {
+          opacity: 1;
+        }
+      }
+    }
+
+    & .help-text {
+      position: absolute;
+      top: 1rem;
+      right: -12rem;
+      width: 10rem;
+      padding: 0.5rem;
+      background-color: var(--help-background-color);
+      border-radius: var(--elements-radius);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.5s ease-in-out;
+    }
+
+    & .error-message {
+      position: absolute;
+      top: -2rem;
+      left: 1rem;
+      font-size: 0.75rem;
+      padding: 0.5rem;
+      color: var(--font-color);
+      background-color: var(--error-color);
+      margin: 0.25rem 0 0;
     }
 
     & div {
@@ -289,15 +353,6 @@ fieldset {
 
       & *:not([type="checkbox"][role="switch"]) {
         width: 100%;
-      }
-
-      & .error-message {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        font-size: 0.75rem;
-        color: var(--error-color);
-        margin: 0.25rem 0 0;
       }
     }
     
@@ -315,7 +370,77 @@ fieldset {
     }
   }
 
-  &.compose, &.compose-object, &.compose-array {
+  &.is-list {
+    display: block;
+
+    & label {
+      display: block;
+      margin-bottom: 1rem;
+
+      & span {
+        display: block;
+      }
+    }
+
+    & ul {
+      padding: 0;
+      margin: 0;
+    }
+
+    & li {
+      display: flex;
+      font-family: 'Open Sans', sans-serif;
+      border: none;
+      background: none;
+      color: var(--font-color);
+      padding: var(--element-padding);
+    }
+  
+    & input {
+      border: none;
+      border-bottom: 1px solid var(--border-color);
+      background: none;
+      color: var(--font-color);
+      padding: var(--element-padding);
+      flex: 0 0 80%;
+    }
+  
+    & .button-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      flex: 0 0 5rem;
+      height: 1.6rem;
+
+      & .button {
+        position: static;
+      }
+    }
+  }
+
+  &.is-array, &.is-object {
+    display: block;
+
+    & label {
+      display: block;
+      margin-bottom: 1rem;
+
+      & span {
+        display: block;
+      }
+    }
+  }
+
+  & .object-dropzone, & .array-dropzone {
+    min-height: 5rem;
+    border: 1px dotted var(--border-color);
+    border-radius: var(--elements-radius);
+    padding: 0.5rem 0.5rem 2rem;
+  }
+
+
+  /*
+  &.is-property, &.compose-object, &.compose-array {
     position: relative;
     display: flex;
     justify-content: flex-start;
@@ -361,26 +486,32 @@ fieldset {
         margin-bottom: 1rem;
       }
     }
+  }
+  */
+}
 
-    .delete-button {
-      background: none;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border: 1px solid var(--border-color);
-      flex: 0 0 1.6rem;
-      height: 1.6rem;
-      border-radius: 50%;
-      color: var(--font-color);
-      cursor: pointer;
-      margin-left: auto;
+.delete-button, .add-button {
+  position: absolute;
+  top: calc(50% - 0.75rem);
+  right: 0.5rem;
+  background: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  flex: 0 0 1.6rem;
+  height: 1.6rem;width: 1.6rem;
+  border-radius: 50%;
+  color: var(--font-color);
+  cursor: pointer;
+  margin-left: auto;
 
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-      }
-    }
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
   }
 }
+
+
 
 ::placeholder {
   color: var(--font-color);

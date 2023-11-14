@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const yaml = require('js-yaml');
+const { error } = require('console');
 
 const isDev = process.env.NODE_ENV !== 'production';
 const isMac = process.platform === 'darwin';
@@ -40,6 +41,7 @@ function unsetWindowIdentifier(win) {
 
 // Main Window
 function createMainWindow() {
+  // nodeIntegration: true according to https://github.com/electron/electron/issues/23506
   mainWindow = new BrowserWindow({
     width: isDev ? 1000 : 500,
     height: 600,
@@ -119,10 +121,29 @@ function refreshMainWindow() {
   });
 };
 
-// Show/create the components window and send the component type to it
-function showComponentsWindow(componentType) {
-  componentsWindow.webContents.send('componentType', componentType);
-  componentsWindow.show();
+// Save file dialog
+async function saveFile() {
+  const window = BrowserWindow.getFocusedWindow();
+
+  let options = {
+      title: "Save File",
+      // Set default file name if necessary
+      defaultPath: path.join(app.getPath('documents'), 'MyFile.md'),
+      // Set file extension filters if necessary
+      filters: [
+          { name: 'Text Files', extensions: ['md'] },
+          { name: 'All Files', extensions: ['*'] }
+      ]
+  };
+
+  const result = await dialog.showSaveDialog(window, options);
+
+  if (result.canceled) {
+      console.log('No file saved');
+      return;
+  }
+
+  return result.filePath;
 }
 
 //On app ready, create the window
@@ -190,18 +211,15 @@ app.whenReady().then(() => {
   });
 
   // get the page object from the renderer process
-  ipcMain.handle('writeObjectToFile', (e, pageObject) => {
+  ipcMain.handle('writeObjectToFile', async (e, pageObject) => {
     //convert the page object to frontmatter yaml
     const yamlString = `--- \n${yaml.dump(pageObject)}\n---`;
     // write the YAML to a file
-    // first open a dialog to select a directory
-    dialog.showOpenDialog({ properties: ['openDirectory'] })
-      .then(result => {
-        const dir = result.filePaths[0];
-        // write the YAML to a file
-        const targetFile = path.join(dir, 'testfile.md');
-        fs.writeFileSync(targetFile, yamlString);
-    });
+    const filePath = await saveFile();
+    
+    if (!filePath) return;
+  
+    fs.writeFileSync(filePath, yamlString); 
   });
 });
 
