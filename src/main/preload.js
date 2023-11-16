@@ -15,6 +15,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   receiveMessage: (channel, func) => { 
     ipcRenderer.on(channel, (event, ...args) => func(...args));
   },
-  toYAML: (args) => convertToYAML.dump(args)
+  toYAML: (args) => convertToYAML.dump(args),
 })
 

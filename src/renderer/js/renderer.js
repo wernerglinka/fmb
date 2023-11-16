@@ -264,6 +264,32 @@ function createComponent(type) {
   div.classList.add('form-element');
   elementModifier && div.classList.add(elementModifier);
 
+  // Make element draggable but nothing can be dropped into it
+  div.setAttribute('draggable', true);
+  div.classList.add('no-drop');
+  div.addEventListener('dragstart', dragStart);
+  // Temp element storage so I know what type of element I'm dragging
+  let draggedElement = null;
+
+  // Add a drag handle
+  const dragHandle = document.createElement('span');
+  dragHandle.classList.add('sort-handle');
+  dragHandle.innerHTML = `
+    <svg viewBox="0 0 14 22" xmlns="http://www.w3.org/2000/svg">
+        <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+            <g id="Artboard" stroke="#FFFFFF" stroke-width="2">
+                <circle id="Oval" cx="4" cy="11" r="1"></circle>
+                <circle id="Oval" cx="4" cy="4" r="1"></circle>
+                <circle id="Oval" cx="4" cy="18" r="1"></circle>
+                <circle id="Oval" cx="10" cy="11" r="1"></circle>
+                <circle id="Oval" cx="10" cy="4" r="1"></circle>
+                <circle id="Oval" cx="10" cy="18" r="1"></circle>
+            </g>
+        </g>
+    </svg>
+  `;
+  div.appendChild(dragHandle);
+
   
   if( type === 'text' ) {
     // create the label for label input
@@ -395,9 +421,6 @@ function createComponent(type) {
   }
 
   if( type === 'simple list' ) {
-    /**
-     * Create a fieldset for the array
-     */
     // create the array name input
     const label = document.createElement('label');
     label.classList.add('object-name');
@@ -442,7 +465,7 @@ function createComponent(type) {
     listWrapper.appendChild(listItem);
 
     // add a eventlistener to the listWrapper to handle the add and delete buttons
-
+/*
     listWrapper.addEventListener('click', (e) => {
       // if the add button was clicked clone the list item and add it to the list
       if( e.target.classList.contains('add-button') ) {
@@ -454,14 +477,11 @@ function createComponent(type) {
         e.target.parentElement.parentElement.remove();
       }
     });
-
+*/
     div.appendChild(listWrapper);
   }
 
   if( type === 'object' ) {
-    /**
-     * Create a fieldset for the object
-     */
     // create the object name input
     const label = document.createElement('label');
     label.classList.add('object-name', 'not-required');
@@ -477,18 +497,16 @@ function createComponent(type) {
 
     // create a dropzone for the object properties
     const objectDropzone = document.createElement('div');
-    objectDropzone.classList.add('object-dropzone');
+    objectDropzone.classList.add('object-dropzone', 'dropzone');
     objectDropzone.dataset.wrapper = "is-object";
     objectDropzone.addEventListener("dragover", dragOver);
+    objectDropzone.addEventListener("dragleave", dragLeave);
     objectDropzone.addEventListener("drop", drop);
     
     div.appendChild(objectDropzone);
   }
 
   if( type === 'array' ) {
-    /**
-     * Create a fieldset for the array
-     */
     // create the array name input
     const label = document.createElement('label');
     label.classList.add('object-name');
@@ -503,24 +521,45 @@ function createComponent(type) {
 
     // create a dropzone for the array members
     const arrayDropzone = document.createElement('div');
-    arrayDropzone.classList.add('array-dropzone');
+    arrayDropzone.classList.add('array-dropzone', 'dropzone');
     arrayDropzone.dataset.wrapper = "is-array";
     arrayDropzone.addEventListener("dragover", dragOver);
+    arrayDropzone.addEventListener("dragleave", dragLeave);
     arrayDropzone.addEventListener("drop", drop);
     
     div.appendChild(arrayDropzone);
   }
     
+  // add a button wrapper to the element
+  const buttonWrapper = document.createElement('div');
+  buttonWrapper.classList.add('button-wrapper');
+  div.appendChild(buttonWrapper);
+  
+  //add the add button
+  const addButton = document.createElement('div');
+  addButton.classList.add('add-button', 'button');
+  addButton.innerHTML = "+";
+  buttonWrapper.appendChild(addButton);
 
   //add the form-element delete button
   const deleteButton = document.createElement('div');
   deleteButton.classList.add('delete-button');
   deleteButton.innerHTML = "-";
-  deleteButton.addEventListener('click', (e) => {
-    e.target.parentElement.remove();
-    updateButtonsStatus();
+  
+  buttonWrapper.appendChild(deleteButton);
+
+  document.getElementById('dropzone').addEventListener('click', (e) => {
+    e.stopImmediatePropagation();
+    // if the add button was clicked clone the element and add it after the element
+    if( e.target.classList.contains('add-button') ) {
+      const clonedElement = e.target.parentElement.parentElement.cloneNode(true);
+      e.target.parentElement.parentElement.after(clonedElement);
+    }
+    // if the delete button was clicked remove element
+    if( e.target.classList.contains('delete-button') ) {
+      e.target.parentElement.parentElement.remove();
+    }
   });
-  div.appendChild(deleteButton);
 
   return div; 
 };
@@ -528,11 +567,52 @@ function createComponent(type) {
 // Add drag and drop functionality to the form
 function dragStart(event) {
   event.dataTransfer.setData("text/plain", event.target.dataset.component);
+  // Add the drag origin to the dragged element
+  // We may drag a new element token from the 'sidebar' to add an element to the form, OR
+  // we may drag an element in the 'dropzone' to a different dropzone location
+  let origin = "sidebar";
+
+  // Find if an acestor with id 'dropzone' exists
+  const dropzone = event.target.closest('.dropzone');
+  origin = dropzone ? "dropzone" : origin;
+  // Set the origin
+  event.dataTransfer.setData("origin",  origin);
+
+  // store the dragged element
+  draggedElement = event.target;
+
 }
 
 function dragOver(event) {
   event.preventDefault();
+  event.target.classList.add('dropzone-highlight');
 }
+
+function dragLeave(event) {
+  event.target.classList.remove('dropzone-highlight');
+}
+
+
+function getInsertionPoint(container, y) {
+  let closest = null;
+  let closestDistance = Infinity;
+
+  Array.from(container.children).forEach(child => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - (box.height / 2);
+
+      if (Math.abs(offset) < Math.abs(closestDistance)) {
+          closestDistance = offset;
+          closest = child;
+      }
+  });
+
+  return { closest, position: closestDistance < 0 ? 'before' : 'after' };
+}
+
+
+
+
 
 /**
  * @function drop
@@ -541,54 +621,91 @@ function dragOver(event) {
  * in the receiving container with the dropped data
  */
 function drop(event) {
+  event.target.classList.remove('dropzone-highlight');
   event.preventDefault();
   event.stopPropagation();
-  const component = event.dataTransfer.getData("text/plain");
 
-  // create new element with requested component type
-  const newElement = createComponent(component);
+  // determine if the dragged item is from the sidebar or the dropzone
+  const origin = event.dataTransfer.getData("origin");
 
-  // If an object is placed in an array dropzone, hide the label input
-  // since the object will not need a name
-  if( component === "object" && event.target.dataset.wrapper === "is-array" ) {
-    const labelInput = newElement.querySelector('.object-name');
-    
-    // check if any objects already exists in the array dropzone
-    // to avoid duplicate names. E.g. we will generate  'neverMind1', 'neverMind2', etc.
-    const objectsInArray = event.target.querySelectorAll('.object-name');
-    const objectIndex = objectsInArray.length;
-    labelInput.querySelector('input').value = `neverMind${objectIndex + 1}`; // something for the loopstack
-    labelInput.style.display = "none";
-  }
+  if (origin === "sidebar") {
+    // After receiving an element token from the sidebar, we need to create a new element
+    // Get the component type from the dataTransfer object.
+    const component = event.dataTransfer.getData("text/plain");
 
-  // add an eventlistener to the label input to enable the button
-  // when the user has added text to the label input and all other
-  // label inputs have text
-  const newElementLabelInput = newElement.querySelector('.element-label, .object-name input');
-  newElementLabelInput && newElementLabelInput.addEventListener('change', (e) => {
-    const thisElement = e.target;
+    // Create new element with requested component type
+    const newElement = createComponent(component);
 
-    // check if the input is valid
-    // if not valid, show error message and disable the button
-    if( !isValidLabel(thisElement.value) ) {
-      showErrorMessage(thisElement, "Label must only use characters and numbers");
+    // If an object is placed in an array dropzone, hide the label input
+    // since the object will not need a name
+    if( component === "object" && event.target.dataset.wrapper === "is-array" ) {
+      const labelInput = newElement.querySelector('.object-name');
+      
+      // check if any objects already exists in the array dropzone
+      // to avoid duplicate names. E.g. we will generate  'neverMind1', 'neverMind2', etc.
+      const objectsInArray = event.target.querySelectorAll('.object-name');
+      const objectIndex = objectsInArray.length;
+      labelInput.querySelector('input').value = `neverMind${objectIndex + 1}`; // something for the loopstack
+      labelInput.style.display = "none";
+    }
+
+    // Add an eventlistener to the label input to enable the button
+    // when the user has added text to the label input and all other
+    // label inputs have text
+    const newElementLabelInput = newElement.querySelector('.element-label, .object-name input');
+    newElementLabelInput && newElementLabelInput.addEventListener('change', (e) => {
+      const thisElement = e.target;
+
+      // check if the input is valid
+      // if not valid, show error message and disable the button
+      if( !isValidLabel(thisElement.value) ) {
+        showErrorMessage(thisElement, "Label must only use characters and numbers");
+        updateButtonsStatus();
+        return;
+      }
+
+      // remove error message if it exists
+      if (thisElement.classList.contains('invalid')) {
+        removeErrorMessage(thisElement);
+      }
+
       updateButtonsStatus();
-      return;
-    }
+    });
 
-    // remove error message if it exists
-    if (thisElement.classList.contains('invalid')) {
-      removeErrorMessage(thisElement);
-    }
+    // Append the new item to the receiving container
+    event.target.appendChild(newElement);
 
     updateButtonsStatus();
-  });
+
+  } else {
+    // Drag an element from the dropzone to a different dropzone location
+    const dropZone = event.target.closest('.dropzone');
+    if (!dropZone || !draggedElement) return;
+
+    // Clone the dragged element and append to the drop zone
+    //const clonedElement = draggedElement.cloneNode(true);
+    //dropZone.appendChild(clonedElement);
+
+    const { closest, position } = getInsertionPoint(dropZone, event.clientY);
+
+    if (closest) {
+        if (position === 'before') {
+            dropZone.insertBefore(draggedElement, closest);
+        } else {
+            dropZone.insertBefore(draggedElement, closest.nextSibling);
+        }
+    } else {
+        dropZone.appendChild(draggedElement);
+    }
 
 
-  // Append the new item to the receiving container
-  event.target.appendChild(newElement);
+    // Optionally, remove the original element
+    //draggedElement.remove();
 
-  updateButtonsStatus();
+    draggedElement = null; // Clear the reference
+
+    
+  }
 }
 
 /**
@@ -1067,8 +1184,9 @@ async function renderMainWindow(howToProceed) {
   // Add the dropzone to the form
   const dropzone = document.createElement('div');
   dropzone.id = 'dropzone';
-  dropzone.classList.add('dropzone');
+  dropzone.classList.add('dropzone', 'list-group');
   dropzone.addEventListener("dragover", dragOver);
+  dropzone.addEventListener("dragleave", dragLeave);
   dropzone.addEventListener("drop", drop);
   mainForm.appendChild(dropzone);
 
@@ -1116,6 +1234,70 @@ async function renderMainWindow(howToProceed) {
   buttonWrapper.appendChild(clearAllButton);
 
   updateButtonsStatus();
+
+
+
+
+
+  
+/*
+  // Add dragging/sorting functionality to the form
+  let draggedElement = null;
+
+  // Handle the drag start
+  document.addEventListener('dragstart', function(e) {
+    if (e.target.classList.contains('form-element')) {
+      draggedElement = e.target;
+    }
+  });
+
+  // Handle the drag over
+  document.addEventListener('dragover', function(e) {
+    e.preventDefault(); // Necessary to allow dropping
+  });
+
+  // Handle the drop
+  document.addEventListener('drop', function(e) {
+    e.preventDefault();
+    if (!draggedElement) return;
+
+    let dropTarget = e.target.closest('.object-dropzone, .dropzone');
+    if (!dropTarget) {
+      // If not over a dropzone or object-dropzone, ignore the drop
+      return;
+    }
+
+    let afterElement = getDragAfterElement(dropTarget, e.clientY);
+
+    if (afterElement) {
+      dropTarget.insertBefore(draggedElement, afterElement);
+    } else {
+      // If no element is found to drop after, append to the end of the drop target
+      dropTarget.appendChild(draggedElement);
+    }
+
+    draggedElement = null;
+  });
+
+  function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.form-element:not(.dragging)')];
+
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2; // Distance from the center of the element
+
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+*/
+
+
+
+
 
 
   /**
@@ -1186,9 +1368,3 @@ async function renderMainWindow(howToProceed) {
 
   renderMainWindow(howToProceed);
 })();
-
-
-
-
-
-
