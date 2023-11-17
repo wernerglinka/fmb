@@ -361,9 +361,15 @@ function createComponent(type) {
 
     // create the textarea
     const textareaInput = document.createElement('textarea');
-    textareaInput.classList.add('element-value');
+    textareaInput.classList.add('element-value', 'is-editor');
     textareaInput.dataset.type = "textarea";
     textareaInput.placeholder = "Text Placeholder";
+
+    // Attach the editor to the textarea when in focus
+    textareaInput.addEventListener('click', () => {
+      // activate the easyMDEditor
+      console.log("clicked in ta");
+    });
 
     // create wrapper for input for styling
     const inputWrapper = document.createElement('div');
@@ -374,6 +380,24 @@ function createComponent(type) {
     
     // add the label to the div
     div.appendChild(labelText);
+
+    // create a textarea with editor
+    // check if #editorWrapper already exists
+    const editorWrapper = document.getElementById('editorWrapper');
+    if( !editorWrapper ) {
+      // Add an overlay
+      const editorOverlay = document.createElement('div');
+      editorOverlay.id = "editorOverlay";
+      // Add the editor textarea
+      const easyMDEditor = document.createElement('textarea');
+      easyMDEditor.id = "editorWrapper";
+      // add the editor wrapper to the DOM
+      editorOverlay.appendChild(easyMDEditor);
+      document.body.appendChild(editorOverlay);
+      // attach the easyMDEditor to the textarea
+      new EasyMDE({element: easyMDEditor});
+    }
+
   }
 
   if( type === 'checkbox' ) {
@@ -484,13 +508,67 @@ function createComponent(type) {
   if( type === 'object' ) {
     // create the object name input
     const label = document.createElement('label');
-    label.classList.add('object-name', 'not-required');
+    label.classList.add('object-name');
     label.innerHTML = `<span>Object Name<sup>*</sup></span>`;
     const nameInput = document.createElement('input');
     nameInput.setAttribute('type', "text");
     nameInput.placeholder = "Name Placeholder";
-
     label.appendChild(nameInput);
+
+    const collapseIcon = document.createElement('span');
+    collapseIcon.classList.add('collapse-icon');
+    collapseIcon.innerHTML = `
+      <svg class="open" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+          <g transform="translate(-2, -2)" stroke="#FFFFFF" stroke-width="2">
+            <g stroke="#FFFFFF" stroke-width="2">
+              <line x1="12" y1="22" x2="12" y2="16" id="Path"></line>
+              <line x1="12" y1="8" x2="12" y2="2" id="Path"></line>
+              <line x1="4" y1="12" x2="2" y2="12" id="Path"></line>
+              <line x1="10" y1="12" x2="8" y2="12" id="Path"></line>
+              <line x1="16" y1="12" x2="14" y2="12" id="Path"></line>
+              <line x1="22" y1="12" x2="20" y2="12" id="Path"></line>
+              <polyline id="Path" points="15 19 12 16 9 19"></polyline>
+              <polyline id="Path" points="15 5 12 8 9 5"></polyline>
+            </g>
+          </g>
+        </g>
+      </svg>
+
+      
+      <svg class="collapsed viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+          <g transform="translate(-2, -2)" stroke="#FFFFFF" stroke-width="2">
+              <g transform="translate(2, 2)">
+                  <line x1="10" y1="20" x2="10" y2="14" id="Path"></line>
+                  <line x1="10" y1="6" x2="10" y2="0" id="Path"></line>
+                  <line x1="2" y1="10" x2="0" y2="10" id="Path"></line>
+                  <line x1="8" y1="10" x2="6" y2="10" id="Path"></line>
+                  <line x1="14" y1="10" x2="12" y2="10" id="Path"></line>
+                  <line x1="20" y1="10" x2="18" y2="10" id="Path"></line>
+                  <polyline id="Path" points="13 17 10 20 7 17"></polyline>
+                  <polyline id="Path" points="13 3 10 0 7 3"></polyline>
+              </g>
+          </g>
+        </g>
+      </svg>
+    `;
+
+    collapseIcon.addEventListener('click', (event) => {
+      const collapseIcon = event.target.closest('.collapse-icon');
+      const objectDropzone = collapseIcon.closest('.object-name').nextSibling;
+      const isCollapsed = objectDropzone.classList.contains('is-collapsed');
+      if( isCollapsed ) {
+        objectDropzone.classList.remove('is-collapsed');
+        collapseIcon.classList.remove('is-collapsed');
+      } else {
+        objectDropzone.classList.add('is-collapsed');
+        collapseIcon.classList.add('is-collapsed');
+      }
+      
+    });
+
+    label.appendChild(collapseIcon);
 
     div.appendChild(label);
     
@@ -567,9 +645,11 @@ function createComponent(type) {
 // Add drag and drop functionality to the form
 function dragStart(event) {
   event.dataTransfer.setData("text/plain", event.target.dataset.component);
-  // Add the drag origin to the dragged element
-  // We may drag a new element token from the 'sidebar' to add an element to the form, OR
-  // we may drag an element in the 'dropzone' to a different dropzone location
+  /* 
+    Add the drag origin to the dragged element
+    We may drag a new element token from the 'sidebar' to add an element to the form, OR
+    we may drag an element in the 'dropzone' to a different dropzone location
+  */
   let origin = "sidebar";
 
   // Find if an acestor with id 'dropzone' exists
@@ -592,45 +672,87 @@ function dragLeave(event) {
   event.target.classList.remove('dropzone-highlight');
 }
 
-
+/**
+ * @function getInsertionPoint
+ * @param {*} container - The drop container element in which a dragged element is being dropped
+ * @param {*} y - The vertical position of the mouse cursor at the time of the drop, typically provided by e.clientY from the drop event.
+ * @returns The closest insertion point based on the cursor's position
+ * @description This function will get the closest insertion point based on the cursor's position
+ * during a drag/drop operation. The insertion point is the element that is closest
+ * to the cursor's position. The position is either before or after the element.
+ */
 function getInsertionPoint(container, y) {
+  // 'closest' will hold a reference to the closest child element to the drop point
   let closest = null;
+  // 'closestDistance' will hold the distance from the drop point to the closest child element
   let closestDistance = Infinity;
 
+  //  Iterate over each child element of the container 
   Array.from(container.children).forEach(child => {
+      // Get the position and size of the child element
       const box = child.getBoundingClientRect();
+      /*
+        Calculate the vertical offset between the center of the child element 
+        and the drop point. E.g., difference between the drop point and the 
+        vertical midpoint of the child element (box.top + box.height / 2).
+      */
       const offset = y - box.top - (box.height / 2);
 
+      /* 
+        Check if the absolute value of the offset for the current child element 
+        is less than the closestDistance. If it is, this child element is closer 
+        to the drop point than any previously checked elements. Then update 
+        closest to reference this child element and closestDistance to the new 
+        offset value.
+      */
       if (Math.abs(offset) < Math.abs(closestDistance)) {
           closestDistance = offset;
           closest = child;
       }
   });
 
+  /*
+     Along with finding the closest child, we also determine whether the dragged
+     element should be inserted before or after this child. This is decided 
+     based on whether the offset is negative or positive, indicating the cursor's 
+     position relative to the vertical center of the closest child.
+     If offset is negative, the cursor is above the center, set position to 'before'.
+     If offset is positive, the cursor is below the center, set position to 'after'.
+  */
+
+  /*
+    Return an object containing:
+    'closest': The closest child element to the drop point.
+    'position': A string indicating whether the dragged element should be inserted 
+    before or after the closest child ('before' or 'after').
+  */
   return { closest, position: closestDistance < 0 ? 'before' : 'after' };
 }
-
-
-
-
 
 /**
  * @function drop
  * @param {*} event 
- * @description This function will handle the drop event. It will create a new element
- * in the receiving container with the dropped data
+ * @description This function will handle the drop event. It handles two main 
+ * scenarios during a drag-and-drop operation: creating and inserting a new 
+ * element when dragging from the sidebar, and moving an existing element within 
+ * or between drop zones.
  */
 function drop(event) {
-  event.target.classList.remove('dropzone-highlight');
   event.preventDefault();
   event.stopPropagation();
+
+  // Remove highlight class from the event target, which indicates a valid drop target during the dragover event.
+  event.target.classList.remove('dropzone-highlight');
 
   // determine if the dragged item is from the sidebar or the dropzone
   const origin = event.dataTransfer.getData("origin");
 
   if (origin === "sidebar") {
-    // After receiving an element token from the sidebar, we need to create a new element
-    // Get the component type from the dataTransfer object.
+    /*
+      After receiving an element token from the sidebar, we need to create a 
+      new element.
+      Get the component type from the dataTransfer object.
+    */
     const component = event.dataTransfer.getData("text/plain");
 
     // Create new element with requested component type
@@ -649,15 +771,15 @@ function drop(event) {
       labelInput.style.display = "none";
     }
 
-    // Add an eventlistener to the label input to enable the button
-    // when the user has added text to the label input and all other
-    // label inputs have text
+    /*
+      Add an eventlistener to the label input to enable the button when the user
+      has added text to the label input and all other label inputs have text
+    */
     const newElementLabelInput = newElement.querySelector('.element-label, .object-name input');
     newElementLabelInput && newElementLabelInput.addEventListener('change', (e) => {
       const thisElement = e.target;
 
-      // check if the input is valid
-      // if not valid, show error message and disable the button
+      // check if the input is valid, if not valid, show error message and disable the button
       if( !isValidLabel(thisElement.value) ) {
         showErrorMessage(thisElement, "Label must only use characters and numbers");
         updateButtonsStatus();
@@ -682,10 +804,14 @@ function drop(event) {
     const dropZone = event.target.closest('.dropzone');
     if (!dropZone || !draggedElement) return;
 
-    // Clone the dragged element and append to the drop zone
-    //const clonedElement = draggedElement.cloneNode(true);
-    //dropZone.appendChild(clonedElement);
-
+    /*
+      To insert the dragged element either before or after an existing element 
+      in the drop container, including the ability to insert before the first 
+      element, we need to determine the relative position of the cursor to the 
+      center of each potential sibling element. This way, we can decide whether 
+      to insert the dragged element before or after each child based on the 
+      cursor's position.
+    */
     const { closest, position } = getInsertionPoint(dropZone, event.clientY);
 
     if (closest) {
@@ -698,13 +824,7 @@ function drop(event) {
         dropZone.appendChild(draggedElement);
     }
 
-
-    // Optionally, remove the original element
-    //draggedElement.remove();
-
     draggedElement = null; // Clear the reference
-
-    
   }
 }
 

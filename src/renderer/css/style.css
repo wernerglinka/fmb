@@ -12,6 +12,7 @@
   --elements-radius: 0.5rem;
   --titlebar-height: 2rem;
   --help-background-color: #5397be;
+  --editor-background-color: rgba(83, 151, 190, 1);
   --dropzone-background-highlight-color: rgba(253, 250, 114, 0.1);
 }
 
@@ -484,21 +485,68 @@ fieldset {
     display: block;
 
     & label {
+      position: relative;
       display: block;
       margin-bottom: 1rem;
 
       & span {
         display: block;
       }
+
+      & .collapse-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 1rem;
+        right: 0;
+        width: 2rem;
+        height: 2rem;
+        margin: 0;
+        cursor: pointer;
+        transition: all 0.5s ease-in-out;
+
+        & svg {
+          height: 1.4rem;
+          width: 1.4rem;
+        }
+
+        & .open {
+          display: block;
+        }
+        & .collapsed {
+          display: none;
+        }
+
+        &.is-collapsed {
+          & .open {
+            display: none;
+          }
+          & .collapsed {
+            display: block;
+          }
+        }
+      
+      }
     }
   }
 
   & .object-dropzone, & .array-dropzone {
     min-height: 5rem;
+    max-height: 100rem;
     border: 1px dotted var(--border-color);
     border-radius: var(--elements-radius);
     padding: 0.5rem 0.5rem 2rem;
     transition: all 0.5s ease-in-out;
+    opacity: 1;
+
+    &.is-collapsed {
+      max-height: 0;
+      min-height: 0;
+      padding: 0;
+      overflow: hidden;
+      opacity: 0;
+    }
 
     &:hover {
       background-color: rgba(255, 255, 255, 0.05);
@@ -516,7 +564,41 @@ fieldset {
   font-style: italic;
 }
 
+/**
+ * EasyMD Editor styles
+ */
+ #editorOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  padding: 2rem;
+  background-image: linear-gradient(to bottom, #5397be, #3a4076);
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: var(--font-color);
+  font-family: 'Open Sans', sans-serif;
+  display: flex;
+  justify-content: center;
 
+  & .EasyMDEContainer {
+    width: 90%;
+    
+    & .editor-toolbar {
+      background-color: var(--editor-background-color);
+
+      & i.separator {
+        border-right: none;
+      }
+    }
+
+    & .CodeMirror {
+      background-color: var(--editor-background-color);
+    }
+  }
+}
 
 /**
  * A nicer looking Select Element
