@@ -2,6 +2,7 @@
   --font-color: #fff;
   --border-color: #bbb;
   --error-color: red;
+  --button-hover-color: #3a4076;
 
   --hover-color: #fdfa72;
   --highlight-color: #fdfa72;
@@ -12,7 +13,7 @@
   --elements-radius: 0.5rem;
   --titlebar-height: 2rem;
   --help-background-color: #5397be;
-  --editor-background-color: rgba(83, 151, 190, 1);
+  --editor-background: linear-gradient(to top, #5397be, #3a4076);
   --dropzone-background-highlight-color: rgba(253, 250, 114, 0.1);
 }
 
@@ -574,7 +575,7 @@ fieldset {
   right: 0;
   bottom: 0;
   z-index: 10000;
-  padding: 2rem;
+  padding: 5rem 2rem 2rem;
   background-image: linear-gradient(to bottom, #5397be, #3a4076);
   background-repeat: no-repeat;
   background-size: cover;
@@ -583,11 +584,35 @@ fieldset {
   display: flex;
   justify-content: center;
 
+  #closeEditor {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    transition: all 0.5s ease-in-out;
+      
+    & svg {
+      margin: 0.25rem;
+    }
+  }
+
   & .EasyMDEContainer {
     width: 90%;
+    color: inherit;
     
     & .editor-toolbar {
-      background-color: var(--editor-background-color);
+      background-image: var(--editor-background);
+
+      & button {
+        color: var(--font-color);
+        transition: all 0.5s ease-in-out;
+
+        &:hover {
+          color: var(--button-hover-color);
+        }
+      }
 
       & i.separator {
         border-right: none;
@@ -595,8 +620,28 @@ fieldset {
     }
 
     & .CodeMirror {
-      background-color: var(--editor-background-color);
+      background-image: var(--editor-background);
+      color: var(--font-color) !important;
+
+      & .CodeMirror-cursor {
+        border-left-color: var(--font-color) !important;
+      }
+
+      &.disable-markdown-styles {
+        & .cm-header {
+          font-size: 1rem !important;
+          font-weight: normal !important;
+        }
+      }
     }
+
+    & .editor-preview {
+      background-image: var(--editor-background);
+    }
+  }
+
+  #disableMarkdownStyles.disabled {
+      text-decoration: line-through !important;
   }
 }
 
