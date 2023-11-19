@@ -30,11 +30,12 @@
   position: fixed;
   top: 0;
   left: 0;
+  z-index: 1;
   height: var(--titlebar-height);
   width: 100%;
   -webkit-user-select: none;
   -webkit-app-region: drag;
-  cursor: pointer;
+  cursor: move;
 }
 
 .titlebar-button {
@@ -581,13 +582,18 @@ fieldset {
   background-size: cover;
   color: var(--font-color);
   font-family: 'Open Sans', sans-serif;
-  display: flex;
   justify-content: center;
+  display: none;
+
+  &.show {
+    display: flex;
+  }
 
   #closeEditor {
     position: absolute;
-    top: 1rem;
+    top: 2rem;
     right: 1rem;
+    z-index: 10001;
     width: 2rem;
     height: 2rem;
     cursor: pointer;

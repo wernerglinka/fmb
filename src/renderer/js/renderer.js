@@ -364,12 +364,20 @@ function createComponent(type) {
     textareaInput.classList.add('element-value', 'is-editor');
     textareaInput.dataset.type = "textarea";
     textareaInput.placeholder = "Text Placeholder";
+    textareaInput.value = "Start here...";
 
-    // Attach the editor to the textarea when in focus
-    textareaInput.addEventListener('click', () => {
-      // activate the easyMDEditor
-      console.log("clicked in ta");
+    // show the editor when the textarea is in focus
+    textareaInput.addEventListener('click', (event) => {
+      const editorOverlay = document.getElementById('editorOverlay');
+      editorOverlay.classList.add('show');
+
+      window.textareaInput = event.target;
+
+      console.log(window.mdeditor.value());
+      // add value from the textarea to the editor
+      window.mdeditor.value(event.target.value);
     });
+ 
 
     // create wrapper for input for styling
     const inputWrapper = document.createElement('div');
@@ -381,7 +389,10 @@ function createComponent(type) {
     // add the label to the div
     div.appendChild(labelText);
 
-    // create a textarea with editor
+
+    /**
+     *  Create a textarea with editor
+     */
     // check if #editorWrapper already exists
     const editorWrapper = document.getElementById('editorWrapper');
     if( !editorWrapper ) {
@@ -394,8 +405,24 @@ function createComponent(type) {
       // add the editor wrapper to the DOM
       editorOverlay.appendChild(easyMDEditor);
       document.body.appendChild(editorOverlay);
-      // attach the easyMDEditor to the textarea
-      new EasyMDE({element: easyMDEditor});
+   
+      // add the easyMDEditor
+      window.mdeditor = new EasyMDE({element: easyMDEditor, autoDownloadFontAwesome: true});
+  
+      // add a button to the easyMDEitor to disable the inline markdown styles
+      const disableMarkdownStyles = document.createElement('button');
+      disableMarkdownStyles.id = "disableMarkdownStyles";
+      disableMarkdownStyles.innerHTML = "Inline Styles";
+      // add the button to the toolbar
+      const toolbar = document.querySelector('.editor-toolbar');
+      toolbar.appendChild(disableMarkdownStyles);
+
+      // add eventlistener to the disableMarkdownStyles button
+      disableMarkdownStyles.addEventListener('click', (event) => {
+        event.target.classList.toggle('disabled');
+        const codemirrorWrapper = document.querySelector('.CodeMirror');
+        codemirrorWrapper.classList.toggle('disable-markdown-styles');
+      });
 
       // add a close button
       const closeButton = document.createElement('div');
@@ -411,28 +438,13 @@ function createComponent(type) {
       `;
       editorOverlay.appendChild(closeButton);
 
-      // add a button to the easyMDEitor to disable the inline markdown styles
-      const disableMarkdownStyles = document.createElement('button');
-      disableMarkdownStyles.id = "disableMarkdownStyles";
-      disableMarkdownStyles.innerHTML = "Inline Styles";
-      // add the button to the toolbar
-      const toolbar = document.querySelector('.editor-toolbar');
-      toolbar.appendChild(disableMarkdownStyles);
-
       // add eventlistener to the close button
       closeButton.addEventListener('click', () => {
+        // first move the editor value to the textarea
+        window.textareaInput.value = window.mdeditor.value();
         editorOverlay.classList.remove('show');
       });
-
-      // add eventlistener to the disableMarkdownStyles button
-      disableMarkdownStyles.addEventListener('click', (event) => {
-        event.target.classList.toggle('disabled');
-        const codemirrorWrapper = document.querySelector('.CodeMirror');
-        codemirrorWrapper.classList.toggle('disable-markdown-styles');
-      });
-
     }
-
   }
 
   if( type === 'checkbox' ) {
