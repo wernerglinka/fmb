@@ -308,15 +308,21 @@ fieldset {
     position: absolute;
     top: 50%;
     left: 0.5rem;
+    width: 2rem;
+    height: 2rem;
     transform: translateY(-50%);
-    width: 0.7rem;
     cursor: move;
-    padding: 0.5rem;
     display: flex;
     justify-content: center;
     align-items: center;
     opacity: 0;
     transition: all 0.5s ease-in-out;
+
+    & svg {
+      flex: 1;
+      height: 1rem;
+      width: 1rem;
+    }
   }
 
   .button-wrapper {
