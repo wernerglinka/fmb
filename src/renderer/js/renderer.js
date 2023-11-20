@@ -366,6 +366,48 @@ function createComponent(type) {
     textareaInput.placeholder = "Text Placeholder";
     textareaInput.value = "Start here...";
 
+    // create wrapper for input for styling
+    const inputWrapper = document.createElement('div');
+    inputWrapper.appendChild(textareaInput);
+
+    // add the input to the label element
+    labelText.appendChild(inputWrapper);
+    
+    // add the label to the div
+    div.appendChild(labelText);
+  }
+
+  if( type === 'markdown editor' ) {
+    // create the label for label input
+    const label = document.createElement('label');
+    label.innerHTML = `<span>Markdown Editor Label<sup>*</sup></span>`;
+
+    // create the label input
+    const labelInput = document.createElement('input');
+    labelInput.setAttribute('type', "text");
+    labelInput.classList.add('element-label');
+    labelInput.placeholder = "Label Placeholder";
+
+    // create wrapper for input for styling
+    const labelInputWrapper = document.createElement('div');
+    labelInputWrapper.appendChild(labelInput);
+
+    // add the input to the label element
+    label.appendChild(labelInputWrapper);
+    
+    // add the label to the div
+    div.appendChild(label);
+    
+    // create the label for textarea
+    const labelText = document.createElement('label');
+    labelText.innerHTML = `<span>Text for Markdown Editor</span>`;
+
+    // create the textarea
+    const textareaInput = document.createElement('textarea');
+    textareaInput.classList.add('element-value', 'is-editor');
+    textareaInput.dataset.type = "textarea";
+    textareaInput.placeholder = "Click to open editor";
+
     // show the editor when the textarea is in focus
     textareaInput.addEventListener('click', (event) => {
       const editorOverlay = document.getElementById('editorOverlay');
@@ -966,6 +1008,7 @@ function renderComponentsSidepanel() {
   const availableComponents = [
     "text",
     "textarea",
+    "markdown editor",
     "checkbox",
     "simple list",
     "object",
