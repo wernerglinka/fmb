@@ -1132,19 +1132,6 @@ function updateButtonsStatus() {
   } else {
     clearDropzoneButton.disabled = true;
   }
-
-  // update CLEAR ALL button status
-  // CLEAR ALL button is disabled by default. It will be enabled when the user
-  // has added elements to the dropzone or schemas exist and disabled when the
-  // dropzone and schemas are empty.
-  const clearAllButton = document.getElementById('clear-all');
-  const dropzoneIsEmpty = dropzoneElements.length === 0;
-  const schemasIsEmpty = schemaFields.length === 0;
-  if( dropzoneIsEmpty && schemasIsEmpty ) {
-    clearAllButton.disabled = true;
-  } else {
-    clearAllButton.disabled = false;
-  }
 }
 
 /**
@@ -1559,25 +1546,7 @@ async function renderMainWindow(howToProceed) {
   });
   buttonWrapper.appendChild(clearDropzoneButton);
 
-  // Add a CLEAR ALL button
-  const schemaContainer = document.getElementById('existing-schemas');
-  const clearAllButton = document.createElement('button');
-  clearAllButton.classList.add('form-button');
-  clearAllButton.id ='clear-all';
-  clearAllButton.innerHTML = "Clear ALL";
-  clearAllButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    if ( dropzone ) {dropzone.innerHTML = ""};
-    if ( schemaContainer ) {schemaContainer.innerHTML = ""};
-    //mainForm.reset();
-
-    updateButtonsStatus();
-  });
-  
-  buttonWrapper.appendChild(clearAllButton);
-
   updateButtonsStatus();
-
 
   /**
    *  Listen for form submittion
