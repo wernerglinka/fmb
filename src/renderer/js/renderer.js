@@ -663,15 +663,12 @@ function createComponent(type) {
       }
       
     });
-
     label.appendChild(collapseIcon);
-
     div.appendChild(label);
     
 
     // create a dropzone for the object properties
     const objectDropzone = document.createElement('div');
-    objectDropzone.innerHTML = `<div class="drop-indicator"></div>`;
     objectDropzone.classList.add('object-dropzone', 'dropzone');
     objectDropzone.dataset.wrapper = "is-object";
     objectDropzone.addEventListener("dragover", dragOver);
@@ -689,14 +686,64 @@ function createComponent(type) {
     const nameInput = document.createElement('input');
     nameInput.setAttribute('type', "text");
     nameInput.placeholder = "Array Name";
-
     label.appendChild(nameInput);
 
+    const collapseIcon = document.createElement('span');
+    collapseIcon.classList.add('collapse-icon');
+    collapseIcon.innerHTML = `
+      <svg class="open" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+          <g transform="translate(-2, -2)" stroke="#FFFFFF" stroke-width="2">
+            <g stroke="#FFFFFF" stroke-width="2">
+              <line x1="12" y1="22" x2="12" y2="16" id="Path"></line>
+              <line x1="12" y1="8" x2="12" y2="2" id="Path"></line>
+              <line x1="4" y1="12" x2="2" y2="12" id="Path"></line>
+              <line x1="10" y1="12" x2="8" y2="12" id="Path"></line>
+              <line x1="16" y1="12" x2="14" y2="12" id="Path"></line>
+              <line x1="22" y1="12" x2="20" y2="12" id="Path"></line>
+              <polyline id="Path" points="15 19 12 16 9 19"></polyline>
+              <polyline id="Path" points="15 5 12 8 9 5"></polyline>
+            </g>
+          </g>
+        </g>
+      </svg>
+
+      
+      <svg class="collapsed viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+          <g transform="translate(-2, -2)" stroke="#FFFFFF" stroke-width="2">
+              <g transform="translate(2, 2)">
+                  <line x1="10" y1="20" x2="10" y2="14" id="Path"></line>
+                  <line x1="10" y1="6" x2="10" y2="0" id="Path"></line>
+                  <line x1="2" y1="10" x2="0" y2="10" id="Path"></line>
+                  <line x1="8" y1="10" x2="6" y2="10" id="Path"></line>
+                  <line x1="14" y1="10" x2="12" y2="10" id="Path"></line>
+                  <line x1="20" y1="10" x2="18" y2="10" id="Path"></line>
+                  <polyline id="Path" points="13 17 10 20 7 17"></polyline>
+                  <polyline id="Path" points="13 3 10 0 7 3"></polyline>
+              </g>
+          </g>
+        </g>
+      </svg>
+    `;
+
+    collapseIcon.addEventListener('click', (e) => {
+      const collapseIcon = e.target.closest('.collapse-icon');
+      const objectDropzone = collapseIcon.closest('.object-name').nextSibling;
+      const isCollapsed = objectDropzone.classList.contains('is-collapsed');
+      if( isCollapsed ) {
+        objectDropzone.classList.remove('is-collapsed');
+        collapseIcon.classList.remove('is-collapsed');
+      } else {
+        objectDropzone.classList.add('is-collapsed');
+        collapseIcon.classList.add('is-collapsed');
+      }
+    });
+    label.appendChild(collapseIcon);
     div.appendChild(label);
 
     // create a dropzone for the array members
     const arrayDropzone = document.createElement('div');
-    arrayDropzone.innerHTML = `<div class="drop-indicator"></div>`;
     arrayDropzone.classList.add('array-dropzone', 'dropzone');
     arrayDropzone.dataset.wrapper = "is-array";
     arrayDropzone.addEventListener("dragover", dragOver);
@@ -711,17 +758,16 @@ function createComponent(type) {
   buttonWrapper.classList.add('button-wrapper');
   div.appendChild(buttonWrapper);
   
-  //add the add button
+  //add the ADD button
   const addButton = document.createElement('div');
   addButton.classList.add('add-button', 'button');
   addButton.innerHTML = "+";
   buttonWrapper.appendChild(addButton);
 
-  //add the form-element delete button
+  //add the DELETE button
   const deleteButton = document.createElement('div');
   deleteButton.classList.add('delete-button');
   deleteButton.innerHTML = "-";
-  
   buttonWrapper.appendChild(deleteButton);
 
   document.getElementById('dropzone').addEventListener('click', (e) => {
@@ -1135,6 +1181,9 @@ function drop(e) {
     child.style.margin = "0.5rem 0";
   });
 
+  // get the origin of the dragged element
+  const origin = e.dataTransfer.getData("origin");
+
   /*
     1. Check if we dragged schema files into the dropzone
   */
@@ -1144,9 +1193,6 @@ function drop(e) {
     processSchemaFile(files, dropzone, e);
     return;
   }
-
-  // determine if the dragged item is from the sidebar or the dropzone
-  const origin = e.dataTransfer.getData("origin");
 
   /*
     2. Dragging a new element from the sidebar to the drop zone
@@ -1614,7 +1660,6 @@ async function renderMainWindow(howToProceed) {
    */
   // Add the dropzone to the form
   const dropzone = document.createElement('div');
-  dropzone.innerHTML = `<div class="drop-indicator"></div>`;
   dropzone.id = 'dropzone';
   dropzone.classList.add('dropzone');
   dropzone.addEventListener("dragover", dragOver);
