@@ -273,8 +273,9 @@ function createComponent(type) {
   div.setAttribute('draggable', true);
   div.classList.add('no-drop');
   div.addEventListener('dragstart', dragStart);
+  
   // Temp element storage so I know what type of element I'm dragging
-  let draggedElement = null;
+  window.draggedElement = null;
 
   // Add a drag handle
   const dragHandle = document.createElement('span');
@@ -299,7 +300,7 @@ function createComponent(type) {
   if( type === 'text' ) {
     // create the label for label input
     const label = document.createElement('label');
-    label.innerHTML = `<span>Text Label<sup>*</sup></span>`;
+    label.innerHTML = `<span>Text Key<sup>*</sup></span>`;
 
     // create the label input
     const labelInput = document.createElement('input');
@@ -342,7 +343,7 @@ function createComponent(type) {
   if( type === 'textarea' ) {
     // create the label for label input
     const label = document.createElement('label');
-    label.innerHTML = `<span>Textarea Label<sup>*</sup></span>`;
+    label.innerHTML = `<span>Textarea Key<sup>*</sup></span>`;
 
     // create the label input
     const labelInput = document.createElement('input');
@@ -362,14 +363,14 @@ function createComponent(type) {
     
     // create the label for textarea
     const labelText = document.createElement('label');
-    labelText.innerHTML = `<span>Text for Textarea element</span>`;
+    labelText.innerHTML = `<span>Content</span>`;
 
     // create the textarea
     const textareaInput = document.createElement('textarea');
     textareaInput.classList.add('element-value', 'is-editor');
     textareaInput.dataset.type = "textarea";
-    textareaInput.placeholder = "Text Placeholder";
-    textareaInput.value = "Start here...";
+    textareaInput.placeholder = "Start typing...";
+    textareaInput.value = "";
 
     // create wrapper for input for styling
     const inputWrapper = document.createElement('div');
@@ -385,7 +386,7 @@ function createComponent(type) {
   if( type === 'markdown editor' ) {
     // create the label for label input
     const label = document.createElement('label');
-    label.innerHTML = `<span>Markdown Editor Label<sup>*</sup></span>`;
+    label.innerHTML = `<span>Textarea Key<sup>*</sup></span>`;
 
     // create the label input
     const labelInput = document.createElement('input');
@@ -405,8 +406,9 @@ function createComponent(type) {
     
     // create the label for textarea
     const labelText = document.createElement('label');
-    labelText.innerHTML = `<span>Text for Markdown Editor</span>`;
-
+    //labelText.innerHTML = `<span class="with-switch"><span class="label-text">Markdown content</span><span class="md-select-wrapper"><input type="checkbox" role="switch" class="md-select" checked /></span></span>`;
+    labelText.innerHTML = `<span>Text content</span>`;
+    
     // create the textarea
     const textareaInput = document.createElement('textarea');
     textareaInput.classList.add('element-value', 'is-editor');
@@ -497,7 +499,7 @@ function createComponent(type) {
   if( type === 'checkbox' ) {
     // create the label for label input
     const label = document.createElement('label');
-    label.innerHTML = `<span>Checkbox Label<sup>*</sup></span>`;
+    label.innerHTML = `<span>Checkbox Key<sup>*</sup></span>`;
 
     // create the label input
     const labelInput = document.createElement('input');
@@ -542,7 +544,7 @@ function createComponent(type) {
     // create the array name input
     const label = document.createElement('label');
     label.classList.add('object-name');
-    label.innerHTML = `<span>List Name<sup>*</sup></span>`;
+    label.innerHTML = `<span>List Key<sup>*</sup></span>`;
     const nameInput = document.createElement('input');
     nameInput.setAttribute('type', "text");
     nameInput.placeholder = "Name Placeholder";
@@ -603,7 +605,7 @@ function createComponent(type) {
     // create the object name input
     const label = document.createElement('label');
     label.classList.add('object-name');
-    label.innerHTML = `<span>Object Name<sup>*</sup></span>`;
+    label.innerHTML = `<span>Object Key<sup>*</sup></span>`;
     const nameInput = document.createElement('input');
     nameInput.setAttribute('type', "text");
     nameInput.placeholder = "Name Placeholder";
@@ -669,6 +671,7 @@ function createComponent(type) {
 
     // create a dropzone for the object properties
     const objectDropzone = document.createElement('div');
+    objectDropzone.innerHTML = `<div class="drop-indicator"></div>`;
     objectDropzone.classList.add('object-dropzone', 'dropzone');
     objectDropzone.dataset.wrapper = "is-object";
     objectDropzone.addEventListener("dragover", dragOver);
@@ -682,7 +685,7 @@ function createComponent(type) {
     // create the array name input
     const label = document.createElement('label');
     label.classList.add('object-name');
-    label.innerHTML = `<span>Array Name<sup>*</sup></span>`;
+    label.innerHTML = `<span>Array Key<sup>*</sup></span>`;
     const nameInput = document.createElement('input');
     nameInput.setAttribute('type', "text");
     nameInput.placeholder = "Array Name";
@@ -693,6 +696,7 @@ function createComponent(type) {
 
     // create a dropzone for the array members
     const arrayDropzone = document.createElement('div');
+    arrayDropzone.innerHTML = `<div class="drop-indicator"></div>`;
     arrayDropzone.classList.add('array-dropzone', 'dropzone');
     arrayDropzone.dataset.wrapper = "is-array";
     arrayDropzone.addEventListener("dragover", dragOver);
@@ -856,17 +860,45 @@ function dragStart(e) {
   e.dataTransfer.setData("origin",  origin);
 
   // store the dragged element
-  draggedElement = e.target;
+  window.draggedElement = e.target;
 
 }
 
+/**
+ * @function dragOver(e)
+ * @param {event object} e 
+ * @description This function will handle the dragover event. It will indicate
+ *   drop space by inserting a drop-indicator temporarily
+ */
 function dragOver(e) {
   e.preventDefault();
   e.target.classList.add('dropzone-highlight');
+  const dropzone = e.target.closest('.dropzone');
+  const { closest, position } = getInsertionPoint(dropzone, e.clientY);
+
+  if (closest) {
+      if (position === 'before') {
+        closest.style.marginBottom = "2rem";
+      } else {
+        if (closest.nextSibling) {
+          closest.nextSibling.style.marginTop = "2rem";
+        }  
+      }
+  } else {
+    dropzone.childNodes.forEach(child => {
+      child.style.margin = "0.5rem 0";
+    });
+  }
 }
 
 function dragLeave(e) {
+  const dropzone = e.target.closest('.dropzone');
   e.target.classList.remove('dropzone-highlight');
+
+  // reset all margins that were caused by elements dragged over
+  dropzone.childNodes.forEach(child => {
+    child.style.margin = "0.5rem 0";
+  });
 }
 
 /**
@@ -927,6 +959,159 @@ function getInsertionPoint(container, y) {
 }
 
 /**
+ * @function processSchemaFile
+ * @param {*} files
+ * @param {*} dropzone
+ * @description This function will process the schema files dropped into the dropzone 
+ * Get the files from the clipboard
+ * We are using the HTML5 FileReader API to read the contents of schema files 
+ * enables web applications to asynchronously read the contents of files 
+ * (or raw data buffers) stored on the user's computer, using JavaScript.
+ */
+function processSchemaFile(files, dropzone, e) {
+  // cache the parent clientY
+  const parentClientY = e.clientY;
+  
+  for (const file of files) {
+    // check file extension, exclude non-JSON files
+    if( file.name.split('.').pop() === 'json' ) {
+      // read the file
+      const reader = new FileReader();
+      reader.readAsText(file, "UTF-8");
+      reader.onload = (e) => {
+        const schema = JSON.parse(e.target.result);
+        // create form inputs from the schema fields
+
+        const tempWrapper = document.createElement('div');
+        schema.fields.forEach(field => {
+          // create a new element
+          const schemaElement = getUpdatedElement(field);
+          // Append the new element to the tempWrapper
+          tempWrapper.appendChild(schemaElement);
+        });
+
+        // Append the new element to the receiving dropzone
+        const { closest, position } = getInsertionPoint(dropzone, parentClientY);
+        if (closest) {
+          if (position === 'before') {
+            dropzone.insertBefore(tempWrapper, closest);
+          } else {
+            dropzone.insertBefore(tempWrapper, closest.nextSibling);
+          }
+        } else {
+          dropzone.appendChild(tempWrapper);
+        }
+        
+        updateButtonsStatus();
+      };
+      reader.onerror = (e) => {
+        console.log(`Error reading file: ${e.target.error.code}`);
+      };
+    };
+  }
+};
+
+/**
+ * @function processSidebarDraggables
+ * @param {*} e 
+ * @param {*} component 
+ * @param {*} dropzone
+ * @description This function will process the sidebar draggables
+ */
+function processSidebarDraggables(e, component) {
+  const dropzone = e.target.closest('.dropzone');
+  if (!dropzone) return;
+
+  // Create new element with requested component type
+  const newElement = createComponent(component);
+
+  // If an object is placed in an array dropzone, hide the label input
+  // since the object will not need a name
+  if( component === "object" && e.target.dataset.wrapper === "is-array" ) {
+    const labelInput = newElement.querySelector('.object-name');
+    
+    // check if any objects already exists in the array dropzone
+    // to avoid duplicate names. E.g. we will generate  'neverMind1', 'neverMind2', etc.
+    const objectsInArray = e.target.querySelectorAll('.object-name');
+    const objectIndex = objectsInArray.length;
+    labelInput.querySelector('input').value = `neverMind${objectIndex + 1}`; // something for the loopstack
+    labelInput.style.display = "none";
+  }
+
+  /*
+    Add an eventlistener to the label input to enable the button when the user
+    has added text to the label input and all other label inputs have text
+  */
+  const newElementLabelInput = newElement.querySelector('.element-label, .object-name input');
+  newElementLabelInput && newElementLabelInput.addEventListener('change', (e) => {
+    const thisElement = e.target;
+
+    // check if the input is valid, if not valid, show error message and disable the button
+    if( !isValidLabel(thisElement.value) ) {
+      showErrorMessage(thisElement, "Label must only use characters and numbers");
+      updateButtonsStatus();
+      return;
+    }
+
+    // remove error message if it exists
+    if (thisElement.classList.contains('invalid')) {
+      removeErrorMessage(thisElement);
+    }
+    updateButtonsStatus();
+  });
+
+  /*
+    To insert the dragged element either before or after an existing element 
+    in the drop container, including the ability to insert before the first 
+    element, we need to determine the relative position of the cursor to the 
+    center of each potential sibling element. This way, we can decide whether 
+    to insert the dragged element before or after each child based on the 
+    cursor's position.
+  */
+  const { closest, position } = getInsertionPoint(dropzone, e.clientY);
+  if (closest) {
+      if (position === 'before') {
+          dropzone.insertBefore(newElement, closest);
+      } else {
+          dropzone.insertBefore(newElement, closest.nextSibling);
+      }
+  } else {
+      dropzone.appendChild(newElement);
+  }
+
+  updateButtonsStatus();
+};
+
+/**
+ * @function moveElement
+ * @param {*} e 
+ * @param {*} dropzone 
+ * @description This function will move an existing element within or between drop zones
+ *   To insert the dragged element either before or after an existing element 
+ *   in the drop container, including the ability to insert before the first 
+ *   element, we need to determine the relative position of the cursor to the 
+ *   center of each potential sibling element. This way, we can decide whether 
+ *   to insert the dragged element before or after each child based on the 
+ *   cursor's position.
+ */
+function moveElement(e) {
+  const dropzone = e.target.closest('.dropzone');
+  if (!dropzone) return;
+
+  const { closest, position } = getInsertionPoint(dropzone, e.clientY);
+  if (closest) {
+      if (position === 'before') {
+          dropzone.insertBefore(window.draggedElement, closest);
+      } else {
+          dropzone.insertBefore(window.draggedElement, closest.nextSibling);
+      }
+  } else {
+      dropzone.appendChild(window.draggedElement);
+  }
+  window.draggedElement = null; // Clear the reference
+};
+
+/**
  * @function drop
  * @param {*} event 
  * @description This function will handle the drop event. 
@@ -939,130 +1124,46 @@ function drop(e) {
   e.preventDefault();
   e.stopPropagation();
 
-  // Remove highlight class from the event target, which indicates a valid drop target during the dragover event.
-  e.target.classList.remove('dropzone-highlight');
+  const dropzone = e.target.closest('.dropzone');
+  if (!dropzone) return;
 
-  //Check if we dragged schema files into the dropzone
+  // Remove highlight class from the event target, which indicates a valid drop target during the dragover event.
+  dropzone.classList.remove('dropzone-highlight');
+
+  // reset all margins that were caused by elements dragged over
+  dropzone.childNodes.forEach(child => {
+    child.style.margin = "0.5rem 0";
+  });
+
+  /*
+    1. Check if we dragged schema files into the dropzone
+  */
   const hasFiles = e.dataTransfer.types.includes('Files');
   if (hasFiles) {
-    // Get the dropzone element
-    const dropZone = e.target.closest('.dropzone');   
-
-    /* 
-      Get the files from the clipboard
-      We are using the HTML5 FileReader API to read the contents of schema files 
-      enables web applications to asynchronously read the contents of files 
-      (or raw data buffers) stored on the user's computer, using JavaScript.
-    */
     const files = e.dataTransfer.files;
-    for (const file of files) {
-      // check file extension, exclude non-JSON files
-      if( file.name.split('.').pop() === 'json' ) {
-        // read the file
-        const reader = new FileReader();
-        reader.readAsText(file, "UTF-8");
-        reader.onload = (e) => {
-          const schema = JSON.parse(e.target.result);
-          // render the schema
-          schema.fields.forEach(field => {
-            
-            const updatedElement = getUpdatedElement(field);
-
-            // Append the new item to the receiving container
-            dropZone.appendChild(updatedElement);
-          });
-
-          updateButtonsStatus();
-        };
-        reader.onerror = (e) => {
-          console.log(`Error reading file: ${e.target.error.code}`);
-        };
-      };
-    }
+    processSchemaFile(files, dropzone, e);
     return;
   }
 
   // determine if the dragged item is from the sidebar or the dropzone
   const origin = e.dataTransfer.getData("origin");
 
+  /*
+    2. Dragging a new element from the sidebar to the drop zone
+  */
   if (origin === "sidebar") {
     /*
-      After receiving an element token from the sidebar, we need to create a 
-      new element.
-      Get the component type from the dataTransfer object.
+      After receiving an component token from the sidebar, we need to create a 
+      new element that represents the component type from the dataTransfer object.
     */
     const component = e.dataTransfer.getData("text/plain");
-
-    // Create new element with requested component type
-    const newElement = createComponent(component);
-
-    // If an object is placed in an array dropzone, hide the label input
-    // since the object will not need a name
-    if( component === "object" && e.target.dataset.wrapper === "is-array" ) {
-      const labelInput = newElement.querySelector('.object-name');
-      
-      // check if any objects already exists in the array dropzone
-      // to avoid duplicate names. E.g. we will generate  'neverMind1', 'neverMind2', etc.
-      const objectsInArray = e.target.querySelectorAll('.object-name');
-      const objectIndex = objectsInArray.length;
-      labelInput.querySelector('input').value = `neverMind${objectIndex + 1}`; // something for the loopstack
-      labelInput.style.display = "none";
-    }
-
-    /*
-      Add an eventlistener to the label input to enable the button when the user
-      has added text to the label input and all other label inputs have text
-    */
-    const newElementLabelInput = newElement.querySelector('.element-label, .object-name input');
-    newElementLabelInput && newElementLabelInput.addEventListener('change', (e) => {
-      const thisElement = e.target;
-
-      // check if the input is valid, if not valid, show error message and disable the button
-      if( !isValidLabel(thisElement.value) ) {
-        showErrorMessage(thisElement, "Label must only use characters and numbers");
-        updateButtonsStatus();
-        return;
-      }
-
-      // remove error message if it exists
-      if (thisElement.classList.contains('invalid')) {
-        removeErrorMessage(thisElement);
-      }
-
-      updateButtonsStatus();
-    });
-
-    // Append the new item to the receiving container
-    e.target.appendChild(newElement);
-
-    updateButtonsStatus();
+    processSidebarDraggables(e, component);
 
   } else {
-    // Drag an element from the dropzone to a different dropzone location
-    const dropZone = e.target.closest('.dropzone');
-    if (!dropZone || !draggedElement) return;
-
     /*
-      To insert the dragged element either before or after an existing element 
-      in the drop container, including the ability to insert before the first 
-      element, we need to determine the relative position of the cursor to the 
-      center of each potential sibling element. This way, we can decide whether 
-      to insert the dragged element before or after each child based on the 
-      cursor's position.
+      3. Moving an existing element within or between drop zones
     */
-    const { closest, position } = getInsertionPoint(dropZone, e.clientY);
-
-    if (closest) {
-        if (position === 'before') {
-            dropZone.insertBefore(draggedElement, closest);
-        } else {
-            dropZone.insertBefore(draggedElement, closest.nextSibling);
-        }
-    } else {
-        dropZone.appendChild(draggedElement);
-    }
-
-    draggedElement = null; // Clear the reference
+      moveElement(e);
   }
 }
 
@@ -1513,8 +1614,9 @@ async function renderMainWindow(howToProceed) {
    */
   // Add the dropzone to the form
   const dropzone = document.createElement('div');
+  dropzone.innerHTML = `<div class="drop-indicator"></div>`;
   dropzone.id = 'dropzone';
-  dropzone.classList.add('dropzone', 'list-group');
+  dropzone.classList.add('dropzone');
   dropzone.addEventListener("dragover", dragOver);
   dropzone.addEventListener("dragleave", dragLeave);
   dropzone.addEventListener("drop", drop);
