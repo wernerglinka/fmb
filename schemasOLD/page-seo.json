@@ -1,34 +1,38 @@
 {
-  "label": "seo",
-  "type": "object",
-  "values": [
+  "fields": [
     {
-      "label": "title",
-      "type": "variable",
-      "widget": "text",
-      "value": "",
-      "placeholder": "Add meta title"
-    },
-    {
-      "label": "description",
-      "type": "variable",
-      "widget": "textarea",
-      "value": "",
-      "placeholder": "Add meta description"
-    },
-    {
-      "label": "socialImage",
-      "type": "variable",
-      "widget": "text",
-      "value": "",
-      "placeholder": "Add the URL for an optional meta image"
-    },
-    {
-      "label": "canonicalUrl",
-      "type": "variable",
-      "widget": "text",
-      "value": "",
-      "placeholder": "Add a canonical URL if necessary"
+      "label": "seo",
+      "type": "object",
+      "values": [
+        {
+          "label": "title",
+          "type": "variable",
+          "widget": "text",
+          "value": "",
+          "placeholder": "Add meta title"
+        },
+        {
+          "label": "description",
+          "type": "variable",
+          "widget": "textarea",
+          "value": "",
+          "placeholder": "Add meta description"
+        },
+        {
+          "label": "socialImage",
+          "type": "variable",
+          "widget": "text",
+          "value": "",
+          "placeholder": "Add the URL for an optional meta image"
+        },
+        {
+          "label": "canonicalUrl",
+          "type": "variable",
+          "widget": "text",
+          "value": "",
+          "placeholder": "Add a canonical URL if necessary"
+        }
+      ]
     }
   ]
 }

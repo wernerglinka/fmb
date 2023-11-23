@@ -16,5 +16,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on(channel, (event, ...args) => func(...args));
   },
   toYAML: (args) => convertToYAML.dump(args),
+  getJSObject: (filePath) => ipcRenderer.invoke('convertFileToJs', filePath)
 })
 

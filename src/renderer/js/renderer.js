@@ -1014,7 +1014,7 @@ function getInsertionPoint(container, y) {
  * enables web applications to asynchronously read the contents of files 
  * (or raw data buffers) stored on the user's computer, using JavaScript.
  */
-function processSchemaFile(files, dropzone, e) {
+async function processSchemaFile(files, dropzone, e) {
   // cache the parent clientY
   const parentClientY = e.clientY;
   
@@ -1053,6 +1053,17 @@ function processSchemaFile(files, dropzone, e) {
       reader.onerror = (e) => {
         console.log(`Error reading file: ${e.target.error.code}`);
       };
+    };
+
+    if( file.name.split('.').pop() === 'md' ) {
+
+      try {
+        const yamlObject = await window.electronAPI.getJSObject(file.path);
+        console.log("Received YAML object:", yamlObject);
+      } catch (error) {
+          console.error("Error converting YAML:", error);
+      }
+      
     };
   }
 };
@@ -1166,7 +1177,7 @@ function moveElement(e) {
  *  2. Dragging a new element from the sidebar to the drop zone
  *  3. Moving an existing element within or between drop zones
  */
-function drop(e) {
+async function drop(e) {
   e.preventDefault();
   e.stopPropagation();
 
@@ -1188,9 +1199,10 @@ function drop(e) {
     1. Check if we dragged schema files into the dropzone
   */
   const hasFiles = e.dataTransfer.types.includes('Files');
+
   if (hasFiles) {
     const files = e.dataTransfer.files;
-    processSchemaFile(files, dropzone, e);
+    await processSchemaFile(files, dropzone, e);
     return;
   }
 

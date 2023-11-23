@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const yaml = require('js-yaml');
+const matter = require('gray-matter');
 const { error } = require('console');
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -220,6 +221,17 @@ app.whenReady().then(() => {
     if (!filePath) return;
   
     fs.writeFileSync(filePath, yamlString); 
+  });
+
+  ipcMain.handle('convertFileToJs', (e, filePath) => {
+    try {
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const frontMatter = matter(fileContent).data; // This extracts the frontmatter
+      return frontMatter; // Now returning only the frontmatter as a JS object
+  } catch (e) {
+      console.error("Error reading or parsing file:", e);
+      throw e;
+  }
   });
 });
 
