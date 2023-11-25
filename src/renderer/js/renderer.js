@@ -1004,6 +1004,34 @@ function getInsertionPoint(container, y) {
   return { closest, position: closestDistance < 0 ? 'before' : 'after' };
 }
 
+
+function convertToSchemaObject(jsObject) {
+  function createSchemaField(key, value) {
+      if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+          // It's an object, recurse
+          return {
+              label: key,
+              type: 'object',
+              value: Object.entries(value).map(([subKey, subValue]) => createSchemaField(subKey, subValue))
+          };
+      } else {
+          // It's a primitive value or an array
+          return {
+              label: key,
+              type: 'text',
+              value: value, // Assuming the value to be set directly
+              placeholder: `Add ${key}`
+          };
+      }
+  }
+
+  return {
+      fields: Object.entries(jsObject).map(([key, value]) => createSchemaField(key, value))
+  };
+}
+
+
+
 /**
  * @function processSchemaFile
  * @param {*} files
@@ -1056,14 +1084,38 @@ async function processSchemaFile(files, dropzone, e) {
     };
 
     if( file.name.split('.').pop() === 'md' ) {
+      const frontmatterObject = await window.electronAPI.getJSObject(file.path);
+        console.log("Received YAML object:", frontmatterObject);
+        // the frontmatterObject is the result of parsing the Markdown file's
+        // fontmatter YAML and converting it to a JavaScript object
+        // Parse frontmatterObject and convert into a schema object
 
-      try {
-        const yamlObject = await window.electronAPI.getJSObject(file.path);
-        console.log("Received YAML object:", yamlObject);
-      } catch (error) {
-          console.error("Error converting YAML:", error);
-      }
-      
+        const schema =  convertToSchemaObject(frontmatterObject);
+
+        console.log(JSON.stringify(schema, null, 2));
+
+        const tempWrapper = document.createElement('div');
+        schema.fields.forEach(field => {
+          // create a new element
+          const schemaElement = getUpdatedElement(field);
+          // Append the new element to the tempWrapper
+          tempWrapper.appendChild(schemaElement);
+        });
+
+        // Append the new element to the receiving dropzone
+        const { closest, position } = getInsertionPoint(dropzone, parentClientY);
+        if (closest) {
+          if (position === 'before') {
+            dropzone.insertBefore(tempWrapper, closest);
+          } else {
+            dropzone.insertBefore(tempWrapper, closest.nextSibling);
+          }
+        } else {
+          dropzone.appendChild(tempWrapper);
+        }
+        
+        updateButtonsStatus();
+
     };
   }
 };
